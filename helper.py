@@ -7,7 +7,11 @@ import numpy as np
 
 helper = Blueprint('helper', __name__)
 
-client = MongoClient('localhost', 27017)    #Configure the connection to the database
+uri = 'mongodb://heroku_c9chv2pq:euoqe7c7o24l17ar4pavqleame@ds121014.mlab.com:21014/heroku_c9chv2pq'
+
+#client = MongoClient('localhost', 27017)    #Configure the connection to the database
+client = MongoClient(uri)
+
 db = client.data    #Select the database
 dat = db.dictdata   #Select the collection
 
