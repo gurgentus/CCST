@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %} - Home{% endblock %}
+{% block content %}
+<!-- result: {{ result }} -->
+<script type=text/javascript>
+function display_matrix(matrix) {
+  var latex = "\\begin{pmatrix}";
+  var mat = matrix;
+  for(var i = 0; i < mat.length; i++) {
+    for(var j = 0; j < mat[i].length; j++) {
+      latex = latex + mat[i][j]
+      if (j < mat[i].length - 1) {
+        latex = latex + "&";
+      }
+    }
+    if (i < mat.length - 1) {
+      latex = latex + "\\\\";
+    }
+  }
+  latex = latex +  "\\end{pmatrix}";
+  return latex;
+}
+
+function echo_matrix(matrix) {
+  var latex = "";
+  var mat = matrix;
+  for(var i = 0; i < mat.length; i++) {
+    for(var j = 0; j < mat[i].length; j++) {
+      latex = latex + mat[i][j]
+      if (j < mat[i].length - 1) {
+        latex = latex + " ";
+      }
+    }
+    if (i < mat.length - 1) {
+      latex = latex + "\n";
+    }
+  }
+  return latex;
+}
+
+  $(function() {
+    $('a#calculate').bind('click', function() {
+      $.getJSON($SCRIPT_ROOT + '/_add_numbers', {
+        a: $('input[name="a"]').val(),
+        b: $('input[name="b"]').val()
+      }, function(data) {
+        $("#result").text(data.result);
+      });
+      return false;
+    });
+  });
+
+  $(function() {
+    $('a#process').bind('click', function() {
+      $.getJSON($SCRIPT_ROOT + '/_process', {
+        q: $('input[name="q"]').val(),
+      }, function(data) {
+        var te = $("#result2").text() + '<br />' + data.result2
+        $("#result2").text(te);
+      });
+      return false;
+    });
+  });
+  $(function() {
+    $('a#update_state_display').bind('click', function() {
+      $.getJSON($SCRIPT_ROOT + '/_update_state_display', {
+      }, function(data) {
+        var te = $("#output").text() + '<br />' + data.result
+        $("#output").text(data.result['A']);
+      });
+      return false;
+    });
+  });
+</script>
+
+  <div id="term"></div>
+
+  <script>
+  jQuery(function($) {
+    $('#term').terminal(['http://0.0.0.0:5000/', {
+      echo: function(arg1) {
+          this.echo(arg1);
+      },
+      js: function() {
+      this.push(function(command, term) {
+        var result = window.eval(command);
+        if (result != undefined) {
+          this.echo(String(result));
+        }
+      }, {
+        name: 'js',
+        prompt: 'js> '});
+      },
+      octave: function() {
+        this.push(function(command, term) {
+        $.getJSON($SCRIPT_ROOT + '/octave', {
+          name: command,
+        }, function(data) {
+          if (data.what == 'matrix')
+          {
+            term.echo(String(echo_matrix(data.value)));
+          }
+          if (data.what == 'scalar')
+          {
+            term.echo(String(data.value));
+          }
+
+        });
+        return false;
+      }, {
+        name: 'octave',
+        prompt: 'octave> '});
+      },
+
+      test: function() {
+      this.push(['http://0.0.0.0:5000/', {
+        echo: function(arg1) {
+            this.echo(arg1);
+        },
+      }], {
+        name: 'test',
+        prompt: 'test> '});
+      },
+      gdisplay: function(nm) {
+        $.getJSON($SCRIPT_ROOT + '/gdisplay', {
+          name: nm,
+        }, function(data) {
+          if (data.what == 'matrix')
+          {
+            var latex = "$$" + nm + "=" + display_matrix(data.value) + "$$"
+            $("#output").append(latex);
+            MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
+          }
+          if (data.what == 'ss')
+          {
+            var latex = "$$ \\dot{x} = " + display_matrix(data.A.value) + "x + " +
+             display_matrix(data.B.value) + "u $$";
+            latex = latex + "$$ y = " + display_matrix(data.C.value) + "x + " +
+              display_matrix(data.D.value) + "u $$";
+            $("#output").append(latex);
+            MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
+          }
+          if (data.what == 'controller')
+          {
+            var latex = "$$ \\dot{x}_c = " + display_matrix(data.A.value) + "x + " +
+             display_matrix(data.B1.value) + "y + " + display_matrix(data.B2.value) + "r$$";
+            latex = latex + "$$ u = " + display_matrix(data.C.value) + "x_c + " +
+              display_matrix(data.D1.value) + "y + " +   display_matrix(data.D2.value) + "r$$";
+            $("#output").append(latex);
+            MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
+          }
+          if (data.what == 'feedback')
+          {
+            var latex = "$$ \\dot{x}_a = " + display_matrix(data.A.value) + "x_a + " +
+             display_matrix(data.B.value) + "r $$";
+            latex = latex + "$$ y = " + display_matrix(data.C.value) + "x_a + " +
+              display_matrix(data.D.value) + "r $$";
+            $("#output").append(latex);
+            MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
+          }
+          if (data.what == 'plot')
+          {
+            $('head').append(data.head);
+            var latex = data.script;
+            latex = latex +  "<br />" + data.div + "</p>";
+            $("#output").append(latex);
+            //MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
+          }
+          if (data.what == 'image')
+          {
+            var img_name = data.value;
+            var res = Flask.url_for("send_file", {"filename": img_name});
+            $("#output").append("<img src=" + res + " width=500/>");
+          }
+        });
+        return false;
+      },
+      calc: {
+          mul: function(a, b) {
+              this.echo(a*b);
+          }
+      }
+    }], {
+      //greetings: "Menu: (R)egister (L)ogin"});
+      greetings: "Cloud Controls and Simulation Toolbox"});
+  });
+  </script>
+
+
+<h1>Graphical Output: </h1>
+<div class = 'flash'>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+</div>
+<span id=output></span>
+
+<!-- <img src="{{ url_for('send_file', filename=img_name) }}" width=500/> -->
+
+
+{% endblock %}
