@@ -9,7 +9,7 @@ from jsonrpc.backend.flask import api
 from pymongo import MongoClient # Database connector
 from bson.objectid import ObjectId # For ObjectId to work
 from bson.binary import Binary
-from oct2py import octave as oc
+# from oct2py import octave as oc
 from data import data_api
 from control import control_api
 from flask_jsglue import JSGlue
@@ -90,31 +90,31 @@ def gdisplay():
     return jsonify(states[name]['meta'])
 
 # parse the command as an octave command
-@app.route('/octave')
-def octave():
-    #states = load_states()
-    name = request.args.get('name')
-    sp = name.split('=')
-    # print(len(sp), file=sys.stderr)
-    if len(sp) > 1:
-        rhs = sp[1].strip()
-        nm = sp[0].strip()
-    else:
-        rhs = sp[0].strip()
-        nm = 'ans'
-
-    val = oc.eval(rhs)
-
-    if type(val) is float:
-        states[nm] = {'value': val, 'meta': {'what': 'scalar', 'value': str(val)}}
-    if type(val) is np.ndarray:
-        val = np.asmatrix(val)
-        str_vec = helper.to_str_repr(val)
-        states[nm] = {'value': val, 'meta': {'what': 'matrix', 'value': str_vec}}
-
-    helper.save_states(states)
-
-    return jsonify(states[nm]['meta'])
+# @app.route('/octave')
+# def octave():
+#     #states = load_states()
+#     name = request.args.get('name')
+#     sp = name.split('=')
+#     # print(len(sp), file=sys.stderr)
+#     if len(sp) > 1:
+#         rhs = sp[1].strip()
+#         nm = sp[0].strip()
+#     else:
+#         rhs = sp[0].strip()
+#         nm = 'ans'
+#
+#     val = oc.eval(rhs)
+#
+#     if type(val) is float:
+#         states[nm] = {'value': val, 'meta': {'what': 'scalar', 'value': str(val)}}
+#     if type(val) is np.ndarray:
+#         val = np.asmatrix(val)
+#         str_vec = helper.to_str_repr(val)
+#         states[nm] = {'value': val, 'meta': {'what': 'matrix', 'value': str_vec}}
+#
+#     helper.save_states(states)
+#
+#     return jsonify(states[nm]['meta'])
 
 
 # @api.dispatcher.add_method
