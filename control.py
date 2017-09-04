@@ -18,6 +18,8 @@ def matrix(name, value):
     states = helper.load_states()
     val = np.matrix(json.loads(value))
     str_vec = helper.to_str_repr(val)
+    print(states, file=sys.stderr)
+
     states[name] = {'value': val, 'meta': {'what': 'matrix', 'value': str_vec}}
     helper.save_states(states)
 

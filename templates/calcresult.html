@@ -77,7 +77,7 @@ function echo_matrix(matrix) {
 
   <script>
   jQuery(function($) {
-    $('#term').terminal(['http://0.0.0.0:5000/', {
+    $('#term').terminal([$SCRIPT_ROOT, {
       echo: function(arg1) {
           this.echo(arg1);
       },
@@ -113,7 +113,7 @@ function echo_matrix(matrix) {
       },
 
       test: function() {
-      this.push(['http://0.0.0.0:5000/', {
+      this.push([$SCRIPT_ROOT, {
         echo: function(arg1) {
             this.echo(arg1);
         },
