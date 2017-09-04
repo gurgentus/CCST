@@ -22,12 +22,13 @@ dat = db.dictdata   #Select the collection
 def load_states():
     if dat.find({ "_id": { "$exists": True, "$ne": "" } }):
         idinfo = dat.find_one({"_id":1})
-        if 'states' in idinfo:
-            #print("db", file=sys.stderr)
-            states = pickle.loads(idinfo['states'])
-            return states
-        else:
-            dat.update_one({'_id':1},{'$set':{'states': {} }})
+        if idinfo:
+            if 'states' in idinfo:
+                #print("db", file=sys.stderr)
+                states = pickle.loads(idinfo['states'])
+                return states
+            else:
+                dat.update_one({'_id':1},{'$set':{'states': {} }})
 
 def save_states(states):
     dat.update_one({'_id':1},{'$set':{'states': pickle.dumps(states)}})
