@@ -10,3 +10,4 @@ oct2py
 Flask-JSGlue
 jsonrpc
 json-rpc
+pymongo
