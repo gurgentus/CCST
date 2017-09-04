@@ -12,7 +12,9 @@ uri = 'mongodb://heroku_c9chv2pq:euoqe7c7o24l17ar4pavqleame@ds121014.mlab.com:21
 #client = MongoClient('localhost', 27017)    #Configure the connection to the database
 client = MongoClient(uri)
 
-db = client.data    #Select the database
+#db = client.data    #Select the database
+db = client.get_default_database()
+
 dat = db.dictdata   #Select the collection
 
 # loads and saves states and variables from the database into the 'states' dictionary
