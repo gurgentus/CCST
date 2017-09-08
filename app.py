@@ -15,7 +15,7 @@ from control import control_api
 from flask_jsglue import JSGlue
 
 # orbital mechanics toolbox
-import mpc.omt as omt
+# import mpc.omt as omt
 # loads data from database and contains helper methods
 import helper
 
@@ -86,19 +86,19 @@ def display(name):
 
 
 
-@api.dispatcher.add_method
-def lambert(r1, r2, t, prograde, mu, name):
-    omt_ins = omt.omt()
-    omt_ins.lambert(json.loads(r1), json.loads(r2), float(t), bool(prograde), float(mu))
-    #omt_ins.lambert([5000,10000,2100], [-14600,2500,7000], 3600, True, 398600)
-    #return "Initial position: " + str(r1) + ", initial velocity: " + str(omt_ins.get_v0())
-    states = helper.load_states()
-
-    states[name] = {'value': [r1, omt_ins.get_v0()], 'meta': {'what': 'orbit', 'h': omt_ins.get_h(), 'a': omt_ins.get_a(),
-     'e': omt_ins.get_e(), 'Omega': omt_ins.get_Omega(), 'i': omt_ins.get_i(), 'omega': omt_ins.get_omega()}}
-    helper.save_states(states)
-
-    return "Orbit calculated.  To display orbital elements type gdisplay " + name + "." + str(omt_ins.get_h())
+# @api.dispatcher.add_method
+# def lambert(r1, r2, t, prograde, mu, name):
+#     omt_ins = omt.omt()
+#     omt_ins.lambert(json.loads(r1), json.loads(r2), float(t), bool(prograde), float(mu))
+#     #omt_ins.lambert([5000,10000,2100], [-14600,2500,7000], 3600, True, 398600)
+#     #return "Initial position: " + str(r1) + ", initial velocity: " + str(omt_ins.get_v0())
+#     states = helper.load_states()
+#
+#     states[name] = {'value': [r1, omt_ins.get_v0()], 'meta': {'what': 'orbit', 'h': omt_ins.get_h(), 'a': omt_ins.get_a(),
+#      'e': omt_ins.get_e(), 'Omega': omt_ins.get_Omega(), 'i': omt_ins.get_i(), 'omega': omt_ins.get_omega()}}
+#     helper.save_states(states)
+#
+#     return "Orbit calculated.  To display orbital elements type gdisplay " + name + "." + str(omt_ins.get_h())
 
 # retrieves the variable passed as the argument to render using latex (see calcresult.html)
 @app.route('/gdisplay')
