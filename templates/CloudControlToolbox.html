@@ -113,11 +113,14 @@
     <div class="container-fluid" style="background-color:#2196F3;color:#fff;height:220px;">
       <h1>Cloud Controls & Simulation Toolbox</h1>
       <!-- <h3>Fixed vertical sidenav on scroll</h3> -->
-      <p>The main controls and simulation functionality is natively implemented in python and only uses
-        standard python libraries like numpy and scipy. Plotting uses the bokeh library.
+      <p>The main controls and simulation functionality is natively implemented in python using python flask
+        framework for server side code. I implemented the mathematical computations using
+        standard python libraries like numpy and scipy. The terminal functionality is
+        done using JQuery Terminal.  Plotting uses the bokeh library.
          In addition, I added ability
-      to execute octave commands and automatically manage the context. </p>
-      <p> This is an active project and I actively add new commands and functionality.</p>
+      to execute octave commands and automatically manage the context, which right now works only if installed locally. </p>
+      <p> This project is under development, so many bugs may exist.  In particular, currently sessions are not managed
+      correctly so entered matrices and plots may not be saved. </p>
       <p> For questions and bugs please email me at: greg.hayrapetyan AT gmail.com.
     </div>
     <br>
@@ -139,7 +142,7 @@
                   <h1>Native Support</h1>
                   <p> Commands <code>display</code> and <code>gdisplay</code> are used to display stored
                     data to the console and graphical output displays respectively.
-                  <h1>Octave - warning: available only with local install </h1>
+                  <h1>Octave - warning: temporarily available only with local install </h1>
                   <p>
                   Type <code>octave</code> to switch to Octave command prompt for entering octave commands (Matlab syntax).
                   </p>
@@ -161,46 +164,84 @@
                 </div>
                 <div class="tab-pane" id="controls_tab">
                   <h1> Controls System Commands </h1>
-                    <p>
-                  With that let's delve straight into our fist <em>plant.  </em>Most of Module 1 will use a relatively simple model of a three degree of
-                  freedom car culminating with a project consisting of designing an adaptive cruise control for an autonomous vehicle.  (Preview:
-                  In Module 2 we will introduce a model for landing a spacecraft on a planet while minimizing the acceleration, stay tuned...)
-                    </p>
-                    <p>
-                  For now we remain on the ground, in fact assuming that this ground is completely flat, and describe the car with the following
-                  <em>state variables</em>: the position of its center of mass in the Cartesian coordinates, $x$, $y$, its angle of orientation,
-                  $\xi$, its velocity, $v$, and its mass, $m$. The inputs that can be controlled will be the amount of thrust applied, $\delta T$,
-                  the amount of breaking, $\delta B$, and the angle by which the front wheels are turned, $\delta w$. Below is a diagram summarizing
-                  this variables.
-                    </p>
-                  (ADD PICTURE)
                   <p>
-                  The next step is to derive a differential equation that describes  the dynamics. We'll start easy.  The velocity components in the $x$ and $y$ directions can be simply obtained as vector projections of $v$ onto the coordinate axis using trigonometry,
-                  $$
-                  \dot{x} = v \cos(\xi),
-                  $$
-                  $$
-                  \dot{y} = v \sin(\xi).
-                  $$
-                  We'll also assume that the mass changes as a function of velocity and the throttle, i.e.
-                  $$
-                  \dot{m} = g(v, \delta T).
-                  $$
-                  This can be specified more explicitly depending on the properties of the actual car.
-                    </p>
-                    <p>
-                  Now for the more complicated pieces.  As is often the case with these kinds of problems, our best friend is Newton's Second law, $F = m a = m \dot{v}$, written in terms of the velocity $v$.  What are the different forces acting on the car?  To keep things a bit general we will assume that the total thrust provided by the car is $T(v, \delta T, \delta B)$, a function of the current velocity, as well as throttle and break amount. We also assume that the component of $T$ perpendicular to the tire has an equal friction force in the opposite direction to cancel it, leaving the parallel component, $T \cos(\delta w)$ as the net force (see the picture for the force diagram).  In turn, this force has components $T \cos(\delta w) \cos(\delta w)$ in the direction of forward acceleration, $\dot{v}$ and $T \cos(\delta w) \sin(\delta w)$ in the tangential direction.  It follows that,
+                  Let us analyze longitudinal dynamics representative of a transport aircraft, trimmed at $V_0 = 250$ ft/s and
+                  flying at a low altitude.
 
+                  We linearized dynamics are given by the matrix
                   $$
-                  m \dot{v} = T \cos^2 (\delta w) - D(v),
+                  A =
+                  \begin{pmatrix}
+                  -0.038 & 18.984 & 0 & -32.174 \\
+                  -0.001 & -0.632 & 1 & 0 \\
+                  0 & -0.759 & -0.518 & 0 \\
+                  0 & 0 & 1 & 0
+                  \end{pmatrix}
                   $$
+                  To enter this matrix in CCST type <code> matrix A '[[-0.038, 18.984, 0, -32.174], [-0.001,-0.632, 1, 0],
+                  [0, -0.759, -0.518, 0], [0, 0, 1, 0]]'</code>
+                </p>
+                <p> We can enter <code> gdisplay A </code> to view the entered matrix in latex rendering under the terminal. In turn,
+                  <code> display A </code> will display A in the console.
+                </p>
+                <p> We can easily calculate eigenvectors and eigenvalues of A with the command <code> modes A V E </code>, where
+                  the last two arguments specify the variables were the results will be stored.
+                </p>
+                <p> Next, let us define a matrix $B$ with control derivatives as follows:
+                  <code> matrix B '[[10.1, 0], [0, -0.0086], [0.025, -0.011], [0,0]]' </code>
+                </p>
+                <p>
+                Finally we will define two more matrices, $C$ and $D$ to complete our state space system with state feedback.
+                </p>
+                <p>
+                <code> matrix C '[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]'</code>
+                </p>
+                <p>
+                <code> matrix D '[[0, 0], [0, 0], [0, 0], [0, 0]]'</code>
+                </p>
+                <p>
+                Next, we define the state system with the command <code>ss A B C D G</code>.  The last argument
+                gives the name of the state system.  We can now graphically display the system with <code> gdisplay G </code>
+                </p>
+                Before connecting a feedback controller, let us simulate the angle of attack response to a step elevator command.
+                We first let the system know that the elevator is the second input and the angle of attack is the second output with commands:
+                </p>
+                <p>
+                  <code> control 2 G elevator</code>
+                </p>
+                <p>
+                  <code> output 2 G alpha</code>
+                </p>
+                <p>
+                Now we can simulate the response to a 0.5 radian elevator deflection for 5 seconds with:
+                <code> step alpha G elevator 0.5 5 alpha_plot</code> and view the result with <code>gdisplay alpha_plot</code>.
+              </p>
+              <p>
+              For a closed-loop system we define a controller in a standard space-state form with the command:
+              </p>
+              <p>
+              <code>controller A, B1, B2, C, D1, D2, K</code>
+              </p>
+              <p>
+              and arrange $G$ and $K$ into a feedback loop with:
+              </p>
+              <p>
+              <code>feedback G K G_cl</code>
+              </p>
+              <p>
+              Here, again the last argument gives a name to the resulting closed loop system.
+              </p>
+              <p>
+              To obtain response to initial conditions we can use the command:
+              </p>
+              <p>
+              <code>response alpha G '[[0],[0]]' '[[0]]', 5.0 closed_loop_plot</code>
+              </p>
+              <p>
+              Here the second argument specifies the initial conditions and the third argument specifies
+              the reference input.
+              </p>
 
-                  where the last term is the drag due to air resistance, often approximated with, $C_D \rho v^2 S/2$, where $C_D$ is the drag coefficient, $\rho$ is the density of air, $S$ is the area of the surface.  We'll keep this as $D(v)$ to keep things general.
-                    </p>
-                    <p>
-                  The effect of the tangential force $T \cos(\delta w) \sin(\delta w)$ is slightly more technical to derive using Newton's Law. To keep things relatively simple, we'll use a slightly different argument to obtain an expression for the angular velocity $\dot{\xi}$. Assume that in time $\Delta t$ the base of the car moved $v \Delta t$ in original direction, $\xi$, while the orientation $\xi$ changed by $\Delta \xi$ as shown in the zoomed in picture below
-                    </p>
-                  (ADD PICTURE)
                 </div>
                 <div class="tab-pane" id="scene_segment_tab">
                   <h1>Uploading an Image</h1>
@@ -208,14 +249,19 @@
                     above the console screen and upload an image.  Give a name to this image, for example `image1`.  This will be the handle for
                     working with the image from the console.
                   </p>
-                  <p> After uploading the file we can display the uploaded image with <code> gdisplay image1 </code>.
+                  <p>
+                  After uploading the file we can display the uploaded image with <code>gdisplay image1</code>.
+                  </p>
+                  <h1>
+                  Comning soon: scene segementation instructions.
+                  </h1>
                 </div>
               </div>
               </div>
               <div id="col2" class="col-lg-6" id="myScrollspy">
                 <div class="embed-responsive embed-responsive-16by9" data-spy="affix" data-offset-top="150" data-offset-bottom="200">
-                  <p><object class="embed-responsive-item" data="http://0.0.0.0:5000" height='200'>
-                    <embed src="http://0.0.0.0:5000"/></object></p>
+                  <p><object class="embed-responsive-item" data="https://ccst.herokuapp.com/" height='200'>
+                    <embed src="https://ccst.herokuapp.com/"/></object></p>
                 </div>
               </div>
 

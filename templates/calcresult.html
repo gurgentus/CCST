@@ -140,6 +140,19 @@ function echo_matrix(matrix) {
             $("#output").append(latex);
             MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
+          if (data.what == 'orbit')
+          {
+            var latex = "\\begin{eqnarray} h & = & " + data.h + "\\,km^2/s \\nonumber \\\\";
+            latex = latex + "a & = &" + data.a + "\\, km \\nonumber \\\\";
+            latex = latex + "e & = &" + data.e + "\\nonumber \\\\";
+            latex = latex + "\\Omega & = &" + data.Omega + "^{\\circ} \\nonumber \\\\";
+            latex = latex + "i & = &" + data.i + "^{\\circ} \\nonumber \\\\";
+            latex = latex + "\\omega & = &" + data.omega + "^{\\circ} \\nonumber \\end{eqnarray}";
+            // states[name] = {'value': [r1, omt_ins.get_v0()], 'meta': {'what': 'orbit', 'h': omt_ins.get_h(), 'a': omt_ins.get_a(),
+            //    'e': omt_ins.get_e(), 'Omega': omt_ins.get_omega(), 'i': omt_ins.get_i(), 'omega': omt_ins.get_omega()}}
+            $("#output").append(latex);
+            MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
+          }
           if (data.what == 'controller')
           {
             var latex = "$$ \\dot{x}_c = " + display_matrix(data.A.value) + "x + " +
