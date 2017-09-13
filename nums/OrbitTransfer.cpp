@@ -173,7 +173,6 @@ int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, do
 
     std::cout << "Solving..." << std::endl;
     for (int i=1; i<2; i++) {
-        tf = 0.1*i*24*3600; // final time (s)
         Tbar = T*tf/(v0*1000); // nondimensionalized thrust
         eta = v0*tf/r0; // scaling
         std::cout << "Solving for tf=" << 0.1 * i << "days" << std::endl;

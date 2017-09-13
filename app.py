@@ -91,7 +91,9 @@ def display(name):
 @api.dispatcher.add_method
 def orb_transfer_lobatto3(mu, m0, Isp, T, r0, tf, plot):
     orb_ins = OrbitTransfer.OrbitTransfer()
-    orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(tf))
+    status = orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(tf))
+    if (status == 1):
+        return 'Max number of iterations exhausted.'
     
     # create a new plot with a title and axis labels
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
@@ -99,8 +101,7 @@ def orb_transfer_lobatto3(mu, m0, Isp, T, r0, tf, plot):
                    x_axis_label='x [km]', y_axis_label='y [km]', plot_width=800, plot_height=800)
     ts = orb_ins.getX()
     ys = orb_ins.getY()
-    print(ts)
-    print(ys)
+    
     #ts = [2,3]
     #ys = [5,6]
     # add a line renderer with legend and line thickness
@@ -115,8 +116,10 @@ def orb_transfer_lobatto3(mu, m0, Isp, T, r0, tf, plot):
 def orb_transfer(mu, m0, Isp, T, r0, tf, k, rho, a, b, plot):
     orb_ins = OrbitTransfer.OrbitTransfer()
     orb_ins.SetMatrix(int(k), json.loads(rho), json.loads(a), json.loads(b))
-    orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(tf))
-    
+    status = orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(tf))
+    if (status == 1):
+        return 'Max number of iterations exhausted.'
+
     # create a new plot with a title and axis labels
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
     p = plt.figure(title="Orbit Transfer", tools=TOOLS,
@@ -124,8 +127,6 @@ def orb_transfer(mu, m0, Isp, T, r0, tf, k, rho, a, b, plot):
 
     ts = orb_ins.getX()
     ys = orb_ins.getY()
-    print(ts)
-    print(ys)
     #ts = [2,3]
     #ys = [5,6]
     # add a line renderer with legend and line thickness
