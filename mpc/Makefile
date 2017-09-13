@@ -19,8 +19,9 @@ BOOSTP_LIB = /usr/local/Cellar/boost-python/1.65.0/lib
 # compile mesh classes
 TARGET = omt
 
-$(TARGET).so: $(TARGET).o
-	g++ -shared $(TARGET).o -L$(BOOSTP_LIB) -lboost_python3 -L$(PYTHON_LIB) -lpython$(PYTHON_VERSION) -o $(TARGET).so
+$(TARGET).a: $(TARGET).o
+	#g++ -shared $(TARGET).o -L$(BOOSTP_LIB) -lboost_python3 -L$(PYTHON_LIB) -lpython$(PYTHON_VERSION) -o $(TARGET).so
+	g++ -o $(TARGET) -L$(BOOSTP_LIB) -lboost_python3 -L$(PYTHON_LIB) -lpython$(PYTHON_VERSION) -lpthread
 
 $(TARGET).o: $(TARGET).cpp
 	g++ -I$(PYTHON_INCLUDE) -I$(BOOST_INC) -I$(EIGEN_LIB) -fPIC -c $(TARGET).cpp
