@@ -1,18 +1,20 @@
-cmake_minimum_required(VERSION 3.8)
-project(nums)
+cmake_minimum_required(VERSION 2.8)
+project(OrbitTransfer)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_STANDARD 11)
 
 FIND_PACKAGE(PythonInterp)
 FIND_PACKAGE(PythonLibs)
-FIND_PACKAGE(Boost COMPONENTS python3)
+#FIND_PACKAGE(Boost)
+FIND_PACKAGE(Boost COMPONENTS python-py34)
 
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS} "/home/gurgentus/ccst/include")
 LINK_LIBRARIES(${Boost_LIBRARIES} ${PYTHON_LIBRARIES}) # Deprecated but so convenient!
 
-set(SOURCE_FILES main.cpp BVPSolver.cpp BVPSolver.h DifferentialSystem.cpp DifferentialSystem.h FiniteDifferenceGrid.cpp FiniteDifferenceGrid.h Node.h OrbitTransfer.cpp OrbitTransfer.h CollocationSolver.cpp CollocationSolver.h)# PythonWrapper.cpp)
-#add_executable(nums ${SOURCE_FILES})
-ADD_LIBRARY(nums SHARED ${SOURCE_FILES})
-target_link_libraries(nums ${Python_LIBRARIES} ${Boost_LIBRARIES})
+set(SOURCE_FILES DifferentialSystem.cpp DifferentialSystem.h FiniteDifferenceGrid.cpp FiniteDifferenceGrid.h Node.h OrbitTransfer.cpp OrbitTransfer.h CollocationSolver.cpp CollocationSolver.h)# PythonWrapper.cpp)
+#add_executable(OrbitalTransfer ${SOURCE_FILES})
+ADD_LIBRARY(OrbitTransfer SHARED ${SOURCE_FILES})
+target_link_libraries(OrbitTransfer ${Python_LIBRARIES} ${Boost_LIBRARIES})
 
 

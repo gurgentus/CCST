@@ -4,13 +4,16 @@
 
 #include "OrbitTransfer.h"
 #include <iostream>
-#include "BVPSolver.h"
 #include "CollocationSolver.h"
 
 OrbitTransfer::OrbitTransfer() : DifferentialSystem(0.0, 1.0, 7) {
-
+    this->k = 3;
+    this->rho << 0.0, 0.5, 1.0;
+    this->b << 1.0/6.0, 2.0/3.0, 1.0/6.0;
+    this->a << 0, 0, 0,
+            5.0/24.0, 1.0/3.0, -1.0/24.0,
+            1.0/6.0, 2.0/3.0, 1.0/6.0;
 }
-
 OrbitTransfer::OrbitTransfer(double mu, double m0, double Isp, double T, double r0, double tf) :  DifferentialSystem(0.0, 1.0, 7) {
     this->mu = mu;
     this->m0 = m0;
@@ -22,6 +25,13 @@ OrbitTransfer::OrbitTransfer(double mu, double m0, double Isp, double T, double 
     this->Tbar = T*tf/(v0*1000); // nondimensionalized thrust
     this->mdot = T/Isp/9.80665; // mass flow rate
     this->eta = v0*tf/r0; // scaling
+
+    this->k = 3;
+    this->rho << 0.0, 0.5, 1.0;
+    this->b << 1.0/6.0, 2.0/3.0, 1.0/6.0;
+    this->a << 0, 0, 0,
+            5.0/24.0, 1.0/3.0, -1.0/24.0,
+            1.0/6.0, 2.0/3.0, 1.0/6.0;
 }
 
 Eigen::VectorXd OrbitTransfer::RhsFunc(double t, const Eigen::VectorXd& y)
@@ -130,14 +140,24 @@ Eigen::MatrixXd OrbitTransfer::BcsGrad2Func(const Eigen::VectorXd& y1, const Eig
     return rs;
 }
 
-void OrbitTransfer::run() {
-    std::cout << "Hello, World!" << std::endl;
+int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, double tf) {
+    //std::cout << "Hello, World!" << std::endl;
 
     std::cout << "Setting up DS" << std::endl;
 
+    this->mu = mu;
+    this->m0 = m0;
+    this->Isp = Isp;
+    this->T = T;
+    this->r0 = r0;
+    this->tf = tf;
+    this->v0 = sqrt(mu/r0); // initial tangential velocity of circular orbit
+    this->Tbar = T*tf/(v0*1000); // nondimensionalized thrust
+    this->mdot = T/Isp/9.80665; // mass flow rate
+    this->eta = v0*tf/r0; // scaling
+
     std::cout << "Setting up BVP" << std::endl;
 
-    int N = 1000;
     Eigen::VectorXd init_guess = Eigen::VectorXd::Zero((N+1)*dim());
 
     for (int i=0; i<N+1; i++) {
@@ -149,19 +169,10 @@ void OrbitTransfer::run() {
     // Instantiate a CollocationSolver with 1000 grid points for a system of
     CollocationSolver bvp(this, N, init_guess);
     // collocation parameters
-    Eigen::MatrixXd a = Eigen::MatrixXd(3,3);
-    Eigen::VectorXd rho = Eigen::VectorXd(3);
-    Eigen::VectorXd b = Eigen::VectorXd(3);
-    int k = 3;
-    rho << 0.0, 0.5, 1.0;
-    b << 1.0/6.0, 2.0/3.0, 1.0/6.0;
-    a << 0, 0, 0,
-            5.0/24.0, 1.0/3.0, -1.0/24.0,
-            1.0/6.0, 2.0/3.0, 1.0/6.0;
-    bvp.SetScheme(k, rho, a, b);
+    bvp.SetScheme(this->k, this->rho, this->a, this->b);
 
     std::cout << "Solving..." << std::endl;
-    for (int i=1; i<11; i++) {
+    for (int i=1; i<2; i++) {
         tf = 0.1*i*24*3600; // final time (s)
         Tbar = T*tf/(v0*1000); // nondimensionalized thrust
         eta = v0*tf/r0; // scaling
@@ -169,30 +180,57 @@ void OrbitTransfer::run() {
         int status = bvp.Solve();
         if (status == 0) {
             std::cout << "Solved for tf=" << 0.1 * i << "days" << std::endl;
+            sol_vec_ = bvp.sol_vec();
+            return 0;
         } else {
             std::cout << "Iteration limit exceeded." << std::endl;
-            return;
+            return 1;
         }
     }
     for (int i=0; i < bvp.sol_vec().size()/2; i++)
     {
         std::cout << bvp.Step(i) << " " << bvp.sol_vec()(2*i) << std::endl;
     }
+
     bvp.WriteSolutionFile();
 }
 
-//int lambert(boost::python::list& r1, boost::python::list& r2, double dt, bool prograde, const double mu)
-//{
-//    r.resize(2);
-//    r[0] << boost::python::extract<double>(r1[0]), boost::python::extract<double>(r1[1]),
-//            boost::python::extract<double>(r1[2]);
-//    r[1] << boost::python::extract<double>(r2[0]), boost::python::extract<double>(r2[1]),
-//            boost::python::extract<double>(r2[2]);
-//    orbit_desc(r_res, v_res, r[0], r[1], dt, prograde, mu);
-//    // std::cout << r_res << std::endl;
-//    // std::cout << v_res << std::endl;
-//    return 1;
-//}
+boost::python::list OrbitTransfer::getX()
+{
+    boost::python::list result;
+    for (int i=0; i<N; i++)
+    {
+        result.append(this->r0*sol_vec_(i*dim_)*cos(sol_vec_(i*dim_+3)));
+    }
+    return result;
+}
+
+boost::python::list OrbitTransfer::getY()
+{
+    boost::python::list result;
+    for (int i=0; i<N; i++)
+    {
+        result.append(this->r0*sol_vec_(i*dim_)*sin(sol_vec_(i*dim_+3)));
+    }
+    return result;
+}
+
+int OrbitTransfer::SetMatrix(int k, boost::python::list& rho, boost::python::list& a, boost::python::list& b)
+{
+    this->k = k;
+    this->rho = Eigen::VectorXd(k);
+    this->a = Eigen::MatrixXd(k,k);
+    this->b = Eigen::VectorXd(k);
+    for (int i=0; i<k; i++) {
+         this->rho(i) = boost::python::extract<double>(rho[i]);
+         this->b(i) = boost::python::extract<double>(b[i]);
+    	 for (int j=0; j<k; j++) {
+             this->a(i,j) = boost::python::extract<double>(a[i][j]);
+         }
+    }
+    std::cout << this->a << std::endl;
+    return 0;
+}
 //
 //boost::python::list get_v0()
 //{
@@ -222,5 +260,8 @@ BOOST_PYTHON_MODULE(OrbitTransfer)
     class_<OrbitTransfer>("OrbitTransfer")
 //            .def("greet", &OrbitTransfer::greet)
             .def("run", &OrbitTransfer::run)
+	    .def("SetMatrix", &OrbitTransfer::SetMatrix)
+	    .def("getX", &OrbitTransfer::getX)
+            .def("getY", &OrbitTransfer::getY)
             ;
 }

@@ -10,6 +10,7 @@
 
 #include "Eigen/Dense"
 #include "DifferentialSystem.h"
+#include <boost/numpy.hpp>
 
 class OrbitTransfer : public DifferentialSystem {
 private:
@@ -24,6 +25,12 @@ private:
     double mdot = T/Isp/9.80665; // mass flow rate
     double eta = v0*tf/r0; // scaling
 
+    int N = 1000;
+    int k = 3;
+    Eigen::MatrixXd a = Eigen::MatrixXd(3,3);
+    Eigen::VectorXd rho = Eigen::VectorXd(3);
+    Eigen::VectorXd b = Eigen::VectorXd(3);
+    Eigen::VectorXd sol_vec_;
 public:
     OrbitTransfer();
     OrbitTransfer(double mu, double m0, double Isp, double T, double r0, double tf);
@@ -32,7 +39,10 @@ public:
     Eigen::MatrixXd BcsGrad1Func(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
     Eigen::MatrixXd BcsGrad2Func(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
     Eigen::VectorXd BcsFunc(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
-    void run();
+    int run(double mu, double m0, double Isp, double T, double r0, double tf);
+    int SetMatrix(int k, boost::python::list& rho, boost::python::list& a, boost::python::list& b);
+    boost::python::list getX();
+    boost::python::list getY();
     char const* greet();
 };
 

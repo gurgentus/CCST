@@ -2,7 +2,7 @@
 #include "Eigen/StdVector"
 #include <vector>
 #include <iostream>
-#include <boost/python/numpy.hpp>
+#include <boost/numpy.hpp>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -10,6 +10,7 @@ using Eigen::VectorXd;
 static const double ERR_TOL = 1e-8;
 static const int MAX_ITER = 1000;
 
+// orbital mechanics toolbox
 class omt {
 
   std::vector<Eigen::Vector3d> r;

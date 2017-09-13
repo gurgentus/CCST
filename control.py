@@ -5,7 +5,8 @@ from flask import Blueprint
 from jsonrpc.backend.flask import api
 from scipy import linalg as la
 from scipy.integrate import ode
-
+from bokeh.resources import CDN
+from bokeh.embed import components
 import helper
 
 control_api = Blueprint('control_api', __name__)
@@ -176,8 +177,6 @@ def simulate(output, G, init, inp, time, plot):
     # add a line renderer with legend and line thickness
     p.line(ts, ys, legend=output, line_width=2)
 
-    from bokeh.resources import CDN
-    from bokeh.embed import components
     script, div = components(p)
     states[plot] = {'meta': {}}
     states[plot]['meta'] = {'what': 'plot', 'script': script, 'div': div}

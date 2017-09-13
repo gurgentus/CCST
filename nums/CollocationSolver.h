@@ -25,7 +25,7 @@ private:
     std::string filename_;  // allow the user to specify the output file or use a default name
 
     static constexpr double ERR_TOL = 1e-1; // error tolerance for stopping iterations
-    static const int MAX_ITER = 50; // maximum number of iterations before stopping
+    static const int MAX_ITER = 8; // maximum number of iterations before stopping
 
     /* Collocation Parameters */
     int k = 3;
