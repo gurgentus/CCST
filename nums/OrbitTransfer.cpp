@@ -192,7 +192,7 @@ int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, do
         std::cout << bvp.Step(i) << " " << bvp.sol_vec()(2*i) << std::endl;
     }
 
-    bvp.WriteSolutionFile();
+    // bvp.WriteSolutionFile();
 }
 
 boost::python::list OrbitTransfer::getX()

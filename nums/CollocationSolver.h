@@ -43,7 +43,6 @@ public:
     }
     double Step(int i);
     int Solve();
-    void WriteSolutionFile();
     Eigen::VectorXd sol_vec() const
     {
         return sol_vec_;

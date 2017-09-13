@@ -23,7 +23,7 @@ CollocationSolver::CollocationSolver(DifferentialSystem *p_ode, int num_nodes, E
     // file for solution data
     filename_ = "ode_output.txt";
 
-    // collocation parameters
+    // default collocation parameters - three stage Lobatto scheme
     k = 3;
     rho << 0.0, 0.5, 1.0;
     b << 1.0/6.0, 2.0/3.0, 1.0/6.0;
@@ -97,7 +97,6 @@ int CollocationSolver::Solve()
 
             for (int j=0; j<k; j++)
             {
-                //t = t + h*rho(j);
                 Eigen::VectorXd yi_temp = yi;
 
                 for (int l=0; l<k; l++)
@@ -177,20 +176,4 @@ int CollocationSolver::Solve()
         if (w.norm() < ERR_TOL) return 0;
     }
     return 1;
-}
-
-void CollocationSolver::WriteSolutionFile()
-{
-    std::ofstream output_file(filename_.c_str());
-    assert(output_file.is_open());
-    for (int i=0; i<num_nodes_; i++)
-    {
-        double x = grid_.nodes_[i].coordinate;
-//        output_file << x*0.1*24*3600 << " " << 6378*sol_vec_(i*dim_) << "\n";
-        output_file << 6378*sol_vec_(i*dim_)*cos(sol_vec_(i*dim_+3)) << " " << 6378*sol_vec_(i*dim_)*sin(sol_vec_(i*dim_+3)) << "\n";
-    }
-    output_file.flush();
-    output_file.close();
-    std::cout << "Solution written to " << filename_ << std::endl;
-
 }
