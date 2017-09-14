@@ -2,6 +2,9 @@
  * implementation of a collocation with quasilinearization
  * ref: U.Ascher, R. Mattheij, R. Russelll, Numerical Solution of Boundary Value Problems
  * for Ordinary Differential Equations
+ * The scheme defaults to a three stage Lobatto method, but can be reset using the SetScheme
+ * method.
+ * See OrbitTransfer.cpp for usage example.
  */
 
 #include "CollocationSolver.h"
