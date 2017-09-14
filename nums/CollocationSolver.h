@@ -22,10 +22,11 @@ private:
 
     DifferentialSystem* p_ode_;  // pointer to a system to solve
     Eigen::VectorXd sol_vec_; // pointer to the solution vector
+    Eigen::VectorXd f_vec;
     std::string filename_;  // allow the user to specify the output file or use a default name
 
     static constexpr double ERR_TOL = 1e-1; // error tolerance for stopping iterations
-    static const int MAX_ITER = 8; // maximum number of iterations before stopping
+    static const int MAX_ITER = 20; // maximum number of iterations before stopping
 
     /* Collocation Parameters */
     int k = 3;

@@ -30,6 +30,16 @@ CollocationSolver::CollocationSolver(DifferentialSystem *p_ode, int num_nodes, E
     a << 0, 0, 0,
             5.0/24.0, 1.0/3.0, -1.0/24.0,
             1.0/6.0, 2.0/3.0, 1.0/6.0;
+
+    f_vec = Eigen::VectorXd::Zero((num_nodes_+1)*k*dim_);
+    for (int i=0; i<num_nodes_; i++)
+    {
+        //for (int j=0; j<k; j++) {
+        //    f_vec.block(i * k * dim_ + j*dim_, 0, dim_, 1) = p_ode_->RhsFunc(grid_.nodes_[i].coordinate,
+        //                                                            sol_vec_.segment(i * dim_, dim_));
+        //}
+        f_vec.block(i*k*dim_, 0, dim_, 1) = p_ode_->RhsFunc(grid_.nodes_[i].coordinate, sol_vec_.segment(i*dim_, dim_));
+    }
 }
 
 void CollocationSolver::SetScheme(int k, Eigen::VectorXd& rho, Eigen::MatrixXd& a, Eigen::VectorXd& b) {
@@ -46,12 +56,6 @@ double CollocationSolver::Step(int i)
 
 int CollocationSolver::Solve()
 {
-    Eigen::VectorXd f_vec = Eigen::VectorXd::Zero((num_nodes_+1)*k*dim_);
-    for (int i=0; i<num_nodes_; i++)
-    {
-        f_vec.block(i*k*dim_, 0, dim_, 1) = p_ode_->RhsFunc(grid_.nodes_[i].coordinate, sol_vec_.segment(i*dim_, dim_));
-    }
-
     for (int iter=0; iter<MAX_ITER; iter++)
     {
         std::cout << "Iteration: " << iter << std::endl;
@@ -89,19 +93,21 @@ int CollocationSolver::Solve()
             double t_i = grid_.nodes_[i].coordinate;
             double t_ip1 = grid_.nodes_[i+1].coordinate;
             double h = t_ip1-t_i;
+            double hi = h/(k-1);
 
-            Eigen::VectorXd t = Eigen::VectorXd::LinSpaced(k, t_i, t_ip1);
+            Eigen::VectorXd t = Eigen::VectorXd(k);
             Eigen::VectorXd yi = Eigen::VectorXd(sol_vec_.segment(i*dim_,dim_));
 
             std::vector<Eigen::VectorXd> y;
 
             for (int j=0; j<k; j++)
             {
+		t(j) = t_i + hi*rho(j);
                 Eigen::VectorXd yi_temp = yi;
 
                 for (int l=0; l<k; l++)
                 {
-                    yi_temp = yi_temp + h*a(j,l)*f_vec.segment((i*k+l)*dim_, dim_);
+                    yi_temp = yi_temp + hi*a(j,l)*f_vec.segment((i*k+l)*dim_, dim_);
                 }
 
                 A = p_ode_->RhsGradYFunc(t(j),yi_temp);
@@ -116,14 +122,14 @@ int CollocationSolver::Solve()
             }
 
 
-            W = I2 - h*W;
+            W = I2 - hi*W;
 
             Eigen::MatrixXd Winv;
             Eigen::MatrixXd S;
             Winv = W.inverse();
             U.block(i*k*dim_, 0, k*dim_, dim_) = Winv*V;
             p.segment(i*k*dim_, k*dim_) = Winv*q;
-            S = -I - h*D*Winv*V;
+            S = -I - hi*D*Winv*V;
 
             // populate the sparse matrix
             for (int i2=0; i2<dim_; i2++)
@@ -134,7 +140,7 @@ int CollocationSolver::Solve()
                     Gamma.coeffRef(i*dim_+i2, (i+1)*dim_+j2) = I(i2,j2);
                 }
             }
-            r.block(i*dim_, 0, dim_, 1) = h*D*Winv*q;
+            r.block(i*dim_, 0, dim_, 1) = hi*D*Winv*q;
         }
 
         // populate the sparse matrix

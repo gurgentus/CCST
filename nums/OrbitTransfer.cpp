@@ -14,7 +14,7 @@ OrbitTransfer::OrbitTransfer() : DifferentialSystem(0.0, 1.0, 7) {
             5.0/24.0, 1.0/3.0, -1.0/24.0,
             1.0/6.0, 2.0/3.0, 1.0/6.0;
 }
-OrbitTransfer::OrbitTransfer(double mu, double m0, double Isp, double T, double r0, double tf) :  DifferentialSystem(0.0, 1.0, 7) {
+OrbitTransfer::OrbitTransfer(double mu, double m0, double Isp, double T, double r0, double tf, int N) :  DifferentialSystem(0.0, 1.0, 7) {
     this->mu = mu;
     this->m0 = m0;
     this->Isp = Isp;
@@ -25,6 +25,8 @@ OrbitTransfer::OrbitTransfer(double mu, double m0, double Isp, double T, double 
     this->Tbar = T*tf/(v0*1000); // nondimensionalized thrust
     this->mdot = T/Isp/9.80665; // mass flow rate
     this->eta = v0*tf/r0; // scaling
+
+    this->N = N;
 
     this->k = 3;
     this->rho << 0.0, 0.5, 1.0;
@@ -54,7 +56,7 @@ Eigen::VectorXd OrbitTransfer::RhsFunc(double t, const Eigen::VectorXd& y)
             -u*v*eta/r + post*pv,
             v*eta/r,
             pu*(v*v/rsq-2/(rsq*r))*eta-pv*u*v*eta/rsq,
-            -pr*eta+pv*v/r,
+            -pr*eta+pv*eta*v/r,
             -pu*2*v*eta/r+pv*u*eta/r;
     return rs;
 }
@@ -83,7 +85,7 @@ Eigen::MatrixXd OrbitTransfer::RhsGradYFunc(double t, const Eigen::VectorXd& y)
             u*v*eta/rsq, -v*eta/r, -u*eta/r, 0, 0, -post*pu*pv/pupvsq, post-post*pv*pv/pupvsq,
             -v*eta/rsq, 0, eta/r, 0,0,0,0,
             prdr, prdu, prdv, 0, 0, (v*v/rsq-2/(rsq*r))*eta, -u*v*eta/rsq,
-            -pv*v/rsq, 0, pv/r, 0, -eta, 0, v/r,
+            -pv*eta*v/rsq, 0, pv*eta/r, 0, -eta, 0, v*eta/r,
             pu*2*v*eta/rsq-pv*u*eta/rsq, pv*eta/r, -pu*2*eta/r, 0, 0, -2*v*eta/r, u*eta/r;
 
 
@@ -105,7 +107,7 @@ Eigen::VectorXd OrbitTransfer::BcsFunc(const Eigen::VectorXd& y1, const Eigen::V
 
 
     Eigen::VectorXd rs = Eigen::VectorXd(7);
-    rs << r-1, u, v-1, theta, u2, v2-sqrt(1/r2), -1-pr2+0.5*pv2*sqrt(1/(r2*r2*r2));
+    rs << r-1, u, v-1, theta, u2, v2-sqrt(1/r2), 1-pr2+0.5*pv2*sqrt(1/(r2*r2*r2));
     return rs;
 }
 
@@ -140,23 +142,22 @@ Eigen::MatrixXd OrbitTransfer::BcsGrad2Func(const Eigen::VectorXd& y1, const Eig
     return rs;
 }
 
-int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, double tf) {
-    //std::cout << "Hello, World!" << std::endl;
-
-    std::cout << "Setting up DS" << std::endl;
-
+int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, double days, int N)
+{
     this->mu = mu;
     this->m0 = m0;
     this->Isp = Isp;
     this->T = T;
     this->r0 = r0;
-    this->tf = tf;
+    this->tf = days*24*3600; // tf is given in days
     this->v0 = sqrt(mu/r0); // initial tangential velocity of circular orbit
     this->Tbar = T*tf/(v0*1000); // nondimensionalized thrust
     this->mdot = T/Isp/9.80665; // mass flow rate
     this->eta = v0*tf/r0; // scaling
 
-    std::cout << "Setting up BVP" << std::endl;
+    this->N = N;
+
+    std::cout << "Setting up the BVP" << std::endl;
 
     Eigen::VectorXd init_guess = Eigen::VectorXd::Zero((N+1)*dim());
 
@@ -172,25 +173,40 @@ int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, do
     bvp.SetScheme(this->k, this->rho, this->a, this->b);
 
     std::cout << "Solving..." << std::endl;
-    for (int i=1; i<2; i++) {
+    double timestep = 5*3600; // take five hour timesteps between updating initial guess
+    int max = (int)((tf-timestep)/timestep); // number of timesteps
+    double temp = tf; // holds final time
+    for (int i=0; i<max; i++) {
+        tf = timestep*(i+1);
         Tbar = T*tf/(v0*1000); // nondimensionalized thrust
         eta = v0*tf/r0; // scaling
-        std::cout << "Solving for tf=" << 0.1 * i << "days" << std::endl;
+        std::cout << "Solving for tf=" << tf << " sec" << std::endl;
         int status = bvp.Solve();
-        if (status == 0) {
-            std::cout << "Solved for tf=" << 0.1 * i << "days" << std::endl;
-            sol_vec_ = bvp.sol_vec();
-            return 0;
-        } else {
+        if (status == 1)
+        {
             std::cout << "Iteration limit exceeded." << std::endl;
             return 1;
         }
     }
-    for (int i=0; i < bvp.sol_vec().size()/2; i++)
+
+    tf = temp;
+    Tbar = T*tf/(v0*1000); // nondimensionalized thrust
+    eta = v0*tf/r0; // scaling
+    int status = bvp.Solve();
+    if (status == 0) {
+        std::cout << "Solved for tf=" << tf << " sec" << std::endl;
+        sol_vec_ = bvp.sol_vec();
+        std::cout << sol_vec_.tail(dim()) << std::endl;
+        return 0;
+    }
+    if (status == 1)
     {
-        std::cout << bvp.Step(i) << " " << bvp.sol_vec()(2*i) << std::endl;
+        std::cout << "Iteration limit exceeded." << std::endl;
+        return 1;
     }
 
+    std::cout << "Solved." << std::endl;
+    return 0;
     // bvp.WriteSolutionFile();
 }
 

@@ -25,7 +25,7 @@ private:
     double mdot = T/Isp/9.80665; // mass flow rate
     double eta = v0*tf/r0; // scaling
 
-    int N = 1000;
+    int N = 500;
     int k = 3;
     Eigen::MatrixXd a = Eigen::MatrixXd(3,3);
     Eigen::VectorXd rho = Eigen::VectorXd(3);
@@ -33,13 +33,13 @@ private:
     Eigen::VectorXd sol_vec_;
 public:
     OrbitTransfer();
-    OrbitTransfer(double mu, double m0, double Isp, double T, double r0, double tf);
+    OrbitTransfer(double mu, double m0, double Isp, double T, double r0, double tf, int N);
     Eigen::VectorXd RhsFunc(double t, const Eigen::VectorXd& y) override;
     Eigen::MatrixXd RhsGradYFunc(double t, const Eigen::VectorXd& y) override;
     Eigen::MatrixXd BcsGrad1Func(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
     Eigen::MatrixXd BcsGrad2Func(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
     Eigen::VectorXd BcsFunc(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
-    int run(double mu, double m0, double Isp, double T, double r0, double tf);
+    int run(double mu, double m0, double Isp, double T, double r0, double days, int N);
     int SetMatrix(int k, boost::python::list& rho, boost::python::list& a, boost::python::list& b);
     boost::python::list getX();
     boost::python::list getY();
