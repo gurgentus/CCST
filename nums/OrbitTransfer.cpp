@@ -1,6 +1,8 @@
-//
-// Created by Gurgen Hayrapetyan on 9/9/17.
-//
+/* author: Gurgen Hayrapetyan
+ * maximum radius orbit transfer optimal control problem
+ * ref: James M Longuski, José J. Guzmán, John E. Prussing (auth.)
+ *  -Optimal Control with Aerospace Applications-Springer-Verlag New York (2014)
+ */
 
 #include "OrbitTransfer.h"
 #include <iostream>
