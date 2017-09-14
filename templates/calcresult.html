@@ -128,7 +128,7 @@ function echo_matrix(matrix) {
           if (data.what == 'matrix')
           {
             var latex = "$$" + nm + "=" + display_matrix(data.value) + "$$"
-            $("#output").append(latex);
+            $("#output").prepend(latex);
             MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
           if (data.what == 'ss')
@@ -137,7 +137,7 @@ function echo_matrix(matrix) {
              display_matrix(data.B.value) + "u $$";
             latex = latex + "$$ y = " + display_matrix(data.C.value) + "x + " +
               display_matrix(data.D.value) + "u $$";
-            $("#output").append(latex);
+            $("#output").prepend(latex);
             MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
           if (data.what == 'orbit')
@@ -150,7 +150,7 @@ function echo_matrix(matrix) {
             latex = latex + "\\omega & = &" + data.omega + "^{\\circ} \\nonumber \\end{eqnarray}";
             // states[name] = {'value': [r1, omt_ins.get_v0()], 'meta': {'what': 'orbit', 'h': omt_ins.get_h(), 'a': omt_ins.get_a(),
             //    'e': omt_ins.get_e(), 'Omega': omt_ins.get_omega(), 'i': omt_ins.get_i(), 'omega': omt_ins.get_omega()}}
-            $("#output").append(latex);
+            $("#output").prepend(latex);
             MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
           if (data.what == 'controller')
@@ -159,7 +159,7 @@ function echo_matrix(matrix) {
              display_matrix(data.B1.value) + "y + " + display_matrix(data.B2.value) + "r$$";
             latex = latex + "$$ u = " + display_matrix(data.C.value) + "x_c + " +
               display_matrix(data.D1.value) + "y + " +   display_matrix(data.D2.value) + "r$$";
-            $("#output").append(latex);
+            $("#output").prepend(latex);
             MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
           if (data.what == 'feedback')
@@ -168,7 +168,7 @@ function echo_matrix(matrix) {
              display_matrix(data.B.value) + "r $$";
             latex = latex + "$$ y = " + display_matrix(data.C.value) + "x_a + " +
               display_matrix(data.D.value) + "r $$";
-            $("#output").append(latex);
+            $("#output").prepend(latex);
             MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
           if (data.what == 'plot')
@@ -176,14 +176,14 @@ function echo_matrix(matrix) {
             $('head').append(data.head);
             var latex = data.script;
             latex = latex +  "<br />" + data.div + "</p>";
-            $("#output").append(latex);
+            $("#output").prepend(latex);
             //MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
           if (data.what == 'image')
           {
             var img_name = data.value;
             var res = Flask.url_for("send_file", {"filename": img_name});
-            $("#output").append("<img src=" + res + " width=500/>");
+            $("#output").prepend("<img src=" + res + " width=500/>");
           }
         });
         return false;

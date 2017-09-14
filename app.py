@@ -85,45 +85,67 @@ def display(name):
         return states[name]['value']
     elif states[name]['meta']['what'] == 'image':
         return "To show the image type: " + states[name]['meta']['value']
+    elif states[name]['meta']['what'] == 'matrix':
+        return str(states[name]['value'].tolist())
     else:
         return str(states[name]['value'].tolist())
 
 @api.dispatcher.add_method
-def orb_transfer_lobatto3(mu, m0, Isp, T, r0, tf, plot):
+def orb_transfer_lobatto3(mu, m0, Isp, T, r0, days, timestep_hrs, N, plot):
     orb_ins = OrbitTransfer.OrbitTransfer()
-    status = orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(tf))
+    status = orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(days), float(timestep_hrs), int(N))
     if (status == 1):
         return 'Max number of iterations exhausted.'
+
+    if (status == 2):
+        return 'Collocation scheme failed.  Try decreasing the timestep.'
     
     # create a new plot with a title and axis labels
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
     p = plt.figure(title="Orbit Transfer", tools=TOOLS,
-                   x_axis_label='x [km]', y_axis_label='y [km]', plot_width=800, plot_height=800)
+                   x_axis_label='x [km]', y_axis_label='y [km]', plot_width=600, plot_height=600)
     ts = orb_ins.getX()
     ys = orb_ins.getY()
-    
-    #ts = [2,3]
-    #ys = [5,6]
     # add a line renderer with legend and line thickness
     p.line(ts, ys, legend='r', line_width=2)
+    #p.circle(ts, ys, size=2, color="navy", alpha=0.5)
     script, div = components(p)
     states[plot] = {'meta': {}}
     states[plot]['meta'] = {'what': 'plot', 'script': script, 'div': div}
+
+    # create a new plot with a title and axis labels
+    TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
+    p = plt.figure(title="Steering Control", tools=TOOLS,
+                   x_axis_label='t [sec]', y_axis_label='angle [deg]', plot_width=600, plot_height=300)
+    ts = orb_ins.getT()
+    ys = orb_ins.getAngle()
+    # add a line renderer with legend and line thickness
+    p.line(ts, ys, legend='steering', line_width=2)
+    script, div = components(p)
+    plot_name = plot + '_control'
+    states[plot_name] = {'meta': {}}
+    states[plot_name]['meta'] = {'what': 'plot', 'script': script, 'div': div}
+
     helper.save_states(states)
-    return 'Orbital transfer plot created. Type gdisplay ' + plot + ' to display'
+
+    return 'Orbital transfer plot created. Type gdisplay ' + plot + ' to display the trajectory or gdisplay ' + plot + '_control to display the steering angle'
+
 
 @api.dispatcher.add_method
-def orb_transfer(mu, m0, Isp, T, r0, tf, k, rho, a, b, plot):
+def orb_transfer(mu, m0, Isp, T, r0, tf, timestep_hrs, N, k, rho, a, b, plot):
     orb_ins = OrbitTransfer.OrbitTransfer()
     orb_ins.SetMatrix(int(k), json.loads(rho), json.loads(a), json.loads(b))
-    status = orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(tf))
+    status = orb_ins.run(float(mu), float(m0), float(Isp), float(T), float(r0), float(tf), float(timestep_hrs), int(N))
     if (status == 1):
         return 'Max number of iterations exhausted.'
+
+    if (status == 2):
+        return 'Collocation scheme failed.  Try decreasing the timestep.'
 
     # create a new plot with a title and axis labels
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
     p = plt.figure(title="Orbit Transfer", tools=TOOLS,
-                   x_axis_label='x [km]', y_axis_label='y [km]', plot_width=800, plot_height=800)
+                   x_axis_label='x [km]', y_axis_label='y [km]', plot_width=600, plot_height=600)
 
     ts = orb_ins.getX()
     ys = orb_ins.getY()
@@ -136,9 +158,23 @@ def orb_transfer(mu, m0, Isp, T, r0, tf, k, rho, a, b, plot):
     states[plot] = {'meta': {}}
     states[plot]['meta'] = {'what': 'plot', 'script': script, 'div': div}
 
+    # create a new plot with a title and axis labels
+    TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
+    p = plt.figure(title="Steering Control", tools=TOOLS,
+                   x_axis_label='t [sec]', y_axis_label='angle [deg]', plot_width=600, plot_height=300)
+    ts = orb_ins.getT()
+    ys = orb_ins.getAngle()
+    # add a line renderer with legend and line thickness
+    p.line(ts, ys, legend='steering', line_width=2)
+    script, div = components(p)
+    plot_name = plot + '_control'
+    states[plot_name] = {'meta': {}}
+    states[plot_name]['meta'] = {'what': 'plot', 'script': script, 'div': div}
+
     helper.save_states(states)
 
-    return 'Orbital transfer plot created. Type gdisplay ' + plot + ' to display'
+    return 'Orbital transfer plot created. Type gdisplay ' + plot + ' to display the trajectory or gdisplay ' + plot + '_control to display the steering angle'
+
 
 @api.dispatcher.add_method
 def lambert(r1, r2, t, prograde, mu, name):
