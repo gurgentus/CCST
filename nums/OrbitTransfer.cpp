@@ -142,7 +142,7 @@ Eigen::MatrixXd OrbitTransfer::BcsGrad2Func(const Eigen::VectorXd& y1, const Eig
     return rs;
 }
 
-int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, double days, int N)
+int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, double days, double timestep_hrs, int N)
 {
     this->mu = mu;
     this->m0 = m0;
@@ -173,7 +173,7 @@ int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, do
     bvp.SetScheme(this->k, this->rho, this->a, this->b);
 
     std::cout << "Solving..." << std::endl;
-    double timestep = 5*3600; // take five hour timesteps between updating initial guess
+    double timestep = timestep_hrs*3600; // take timestep_hrs hour timesteps between updating initial guess
     int max = (int)((tf-timestep)/timestep); // number of timesteps
     double temp = tf; // holds final time
     for (int i=0; i<max; i++) {
@@ -185,8 +185,12 @@ int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, do
         if (status == 1)
         {
             std::cout << "Iteration limit exceeded." << std::endl;
-            return 1;
+            return status;
         }
+	if (status == 2)
+	{
+	    return status;
+	}
     }
 
     tf = temp;
@@ -202,12 +206,37 @@ int OrbitTransfer::run(double mu, double m0, double Isp, double T, double r0, do
     if (status == 1)
     {
         std::cout << "Iteration limit exceeded." << std::endl;
-        return 1;
+        return status;
+    }
+    if (status == 2)
+    {
+	return status;
     }
 
     std::cout << "Solved." << std::endl;
     return 0;
     // bvp.WriteSolutionFile();
+}
+
+boost::python::list OrbitTransfer::getT()
+{
+    boost::python::list result;
+    double h = 1.0/N;
+    for (int i=0; i<N; i++)
+    {
+        result.append(i*h*tf);
+    }
+    return result;
+}
+
+boost::python::list OrbitTransfer::getAngle()
+{
+    boost::python::list result;
+    for (int i=0; i<N; i++)
+    {
+        result.append(180*atan(sol_vec_(i*dim_+5)/sol_vec_(i*dim_+6))/3.14);
+    }
+    return result;
 }
 
 boost::python::list OrbitTransfer::getX()
@@ -268,14 +297,12 @@ using namespace boost::python;
 
 BOOST_PYTHON_MODULE(OrbitTransfer)
 {
-    // class_<std::vector<double> >("double_vector")
-    //        .def(vector_indexing_suite<std::vector<double> >())
-    //    ;
-    //void (omt::*orbit_desc)(A&) = &Foo::orbit_desc;
     class_<OrbitTransfer>("OrbitTransfer")
 //            .def("greet", &OrbitTransfer::greet)
             .def("run", &OrbitTransfer::run)
 	    .def("SetMatrix", &OrbitTransfer::SetMatrix)
+            .def("getT", &OrbitTransfer::getT)
+	    .def("getAngle", &OrbitTransfer::getAngle)
 	    .def("getX", &OrbitTransfer::getX)
             .def("getY", &OrbitTransfer::getY)
             ;

@@ -165,6 +165,9 @@ int CollocationSolver::Solve()
         //solver.compute(Gamma);
 
         std::cout << "Solver info: " << solver.info() << std::endl;
+	if (solver.info()  == 1) {
+	    return 2;
+	}
 
         //Use the factors to solve the linear system
         std::cout << "Solving the linear system...";

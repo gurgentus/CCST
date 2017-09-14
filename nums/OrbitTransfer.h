@@ -39,8 +39,10 @@ public:
     Eigen::MatrixXd BcsGrad1Func(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
     Eigen::MatrixXd BcsGrad2Func(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
     Eigen::VectorXd BcsFunc(const Eigen::VectorXd& y1, const Eigen::VectorXd& y2) override;
-    int run(double mu, double m0, double Isp, double T, double r0, double days, int N);
+    int run(double mu, double m0, double Isp, double T, double r0, double days, double timestep_hrs, int N);
     int SetMatrix(int k, boost::python::list& rho, boost::python::list& a, boost::python::list& b);
+    boost::python::list getT();
+    boost::python::list getAngle();
     boost::python::list getX();
     boost::python::list getY();
     char const* greet();
