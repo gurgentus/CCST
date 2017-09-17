@@ -113,11 +113,66 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 
     pass
 
+
+def infer(image_file, sess, logits, keep_prob, image_pl, image_shape):
+    image = scipy.misc.imresize(scipy.misc.imread(image_file), image_shape)
+
+    im_softmax = sess.run(
+        [tf.nn.softmax(logits)],
+        {keep_prob: 1.0, image_pl: [image]})
+    im_softmax = im_softmax[0][:, 1].reshape(image_shape[0], image_shape[1])
+    segmentation = (im_softmax > 0.5).reshape(image_shape[0], image_shape[1], 1)
+    mask = np.dot(segmentation, np.array([[0, 255, 0, 127]]))
+    mask = scipy.misc.toimage(mask, mode="RGBA")
+    street_im = scipy.misc.toimage(image)
+    street_im.paste(mask, box=None, mask=mask)
+    return street_im
+
+def gen_test_output(sess, logits, keep_prob, image_pl, data_folder, image_shape):
+    """
+    Generate test output using the test images
+    :param sess: TF session
+    :param logits: TF Tensor for the logits
+    :param keep_prob: TF Placeholder for the dropout keep robability
+    :param image_pl: TF Placeholder for the image placeholder
+    :param data_folder: Path to the folder that contains the datasets
+    :param image_shape: Tuple - Shape of image
+    :return: Output for for each test image
+    """
+    for image_file in glob(os.path.join(data_folder, 'image_2', '*.png')):
+        infer(image_file, sess, logits, keep_prob, image_pl, image_shape)
+        yield os.path.basename(image_file), np.array(street_im)
+
+def run_inference(file_name):
+    # Add ops to save and restore all the variables.
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        # Restore variables from disk.
+        saver.restore(sess, "/tmp/model.ckpt")
+        print("Model restored.")
+        image_outputs = infer(file_name,
+        sess, logits, 1.0, input_image, os.path.join(data_dir, 'data_road/testing'), image_shape)
+
+def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image):
+    # Make folder for current run
+    output_dir = os.path.join(runs_dir, str(time.time()))
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
+
+    # Run NN on test images and save them to HD
+    print('Training Finished. Saving test images to: {}'.format(output_dir))
+    image_outputs = gen_test_output(
+        sess, logits, keep_prob, input_image, os.path.join(data_dir, 'data_road/testing'), image_shape)
+    for name, image in image_outputs:
+        scipy.misc.imsave(os.path.join(output_dir, name), image)
+
+
 data_dir = './data'
 data_folder = 'data_road/testing'
 runs_dir = './runs'
 
-def run():
+def run(train):
     num_classes = 2
     image_shape = (160, 576)
 
@@ -152,17 +207,19 @@ def run():
         logits, train_op, cross_entropy_loss = optimize(nn_last_layer, correct_label, learning_rate, num_classes)
 
         saver = tf.train.Saver()
-        
-        train_nn(sess, EPOCHS, BATCH_SIZE, get_batches_fn, train_op, cross_entropy_loss, vgg_input,
-             correct_label, vgg_keep_prob, learning_rate)
+        if (train):
+            train_nn(sess, EPOCHS, BATCH_SIZE, get_batches_fn, train_op, cross_entropy_loss, vgg_input,
+                 correct_label, vgg_keep_prob, learning_rate)
 
-        # Save the variables to disk.
-        save_path = saver.save(sess, "models/model.ckpt")
-        print("Model saved in file: %s" % save_path)
+            # Save the variables to disk.
+            save_path = saver.save(sess, "models/model.ckpt")
+            print("Model saved in file: %s" % save_path)
 
-        print("inference")
-        helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, vgg_keep_prob, vgg_input)
-
+            print("inference")
+            helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, vgg_keep_prob, vgg_input)
+        else:
+            run_inference("test.png")
+            
 # def inference(filename):
 #     with tf.Session() as sess:
 #       # Restore variables from disk.
