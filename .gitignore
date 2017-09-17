@@ -2,4 +2,5 @@
 venv
 *~
 .DS_Store
-scene_segmentation/data_road
+scene_segmentation/data_road/*
+scene_segmentation/runs/*
