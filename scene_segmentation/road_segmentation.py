@@ -143,14 +143,14 @@ def gen_test_output(sess, logits, keep_prob, image_pl, data_folder, image_shape)
         infer(image_file, sess, logits, keep_prob, image_pl, image_shape)
         yield os.path.basename(image_file), np.array(street_im)
 
-def run_inference(file_name):
+def run_inference(file_name, sess, saver):
     # Add ops to save and restore all the variables.
-    saver = tf.train.Saver()
-    with tf.Session() as sess:
-        # Restore variables from disk.
-        saver.restore(sess, "/tmp/model.ckpt")
-        print("Model restored.")
-        image_outputs = infer(file_name,
+    #saver = tf.train.Saver()
+    #with tf.Session() as sess:
+    # Restore variables from disk.
+    saver.restore(sess, "/models /model.ckpt")
+    print("Model restored.")
+    image_outputs = infer(file_name,
         sess, logits, 1.0, input_image, os.path.join(data_dir, 'data_road/testing'), image_shape)
 
 def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image):
@@ -186,7 +186,7 @@ def run(train):
 
     learning_rate = 0.001
     keep_prob = 1
-    EPOCHS = 15
+    EPOCHS = 1
     BATCH_SIZE = 2
 
 
@@ -218,8 +218,8 @@ def run(train):
             print("inference")
             helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, vgg_keep_prob, vgg_input)
         else:
-            run_inference("test.png")
-            
+            run_inference("test.png", sess, saver)
+
 # def inference(filename):
 #     with tf.Session() as sess:
 #       # Restore variables from disk.
@@ -256,4 +256,4 @@ def run(train):
 
 
 if __name__ == '__main__':
-    run()
+    run(True)
