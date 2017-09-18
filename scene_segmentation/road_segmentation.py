@@ -148,7 +148,7 @@ def run_inference(file_name, sess, saver):
     #saver = tf.train.Saver()
     #with tf.Session() as sess:
     # Restore variables from disk.
-    saver.restore(sess, "/models /model.ckpt")
+    saver.restore(sess, "../output/model.ckpt")
     print("Model restored.")
     image_outputs = infer(file_name,
         sess, logits, 1.0, input_image, os.path.join(data_dir, 'data_road/testing'), image_shape)
@@ -168,9 +168,9 @@ def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_p
         scipy.misc.imsave(os.path.join(output_dir, name), image)
 
 
-data_dir = './data'
-data_folder = 'data_road/testing'
-runs_dir = './runs'
+data_dir = '/data'
+data_folder = '/data/data_road/testing'
+runs_dir = '/output/runs'
 
 def run(train):
     num_classes = 2
@@ -212,7 +212,7 @@ def run(train):
                  correct_label, vgg_keep_prob, learning_rate)
 
             # Save the variables to disk.
-            save_path = saver.save(sess, "models/model.ckpt")
+            save_path = saver.save(sess, "/output/model.ckpt")
             print("Model saved in file: %s" % save_path)
 
             print("inference")
@@ -256,4 +256,4 @@ def run(train):
 
 
 if __name__ == '__main__':
-    run(True)
+    run(False)

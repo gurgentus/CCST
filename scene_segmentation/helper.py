@@ -123,7 +123,7 @@ def gen_test_output(sess, logits, keep_prob, image_pl, data_folder, image_shape)
     :return: Output for for each test image
     """
     for image_file in glob(os.path.join(data_folder, 'image_2', '*.png')):
-        infer(image_file, sess, logits, keep_prob, image_pl, image_shape)
+        street_im = infer(image_file, sess, logits, keep_prob, image_pl, image_shape)
         yield os.path.basename(image_file), np.array(street_im)
 
 def run_inference(file_name):
