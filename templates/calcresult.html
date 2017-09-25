@@ -4,6 +4,7 @@
 <!-- result: {{ result }} -->
 <script type=text/javascript>
 function display_matrix(matrix) {
+
   var latex = "\\begin{pmatrix}";
   var mat = matrix;
   for(var i = 0; i < mat.length; i++) {
@@ -12,6 +13,32 @@ function display_matrix(matrix) {
       if (j < mat[i].length - 1) {
         latex = latex + "&";
       }
+    }
+    if (i < mat.length - 1) {
+      latex = latex + "\\\\";
+    }
+  }
+  latex = latex +  "\\end{pmatrix}";
+  return latex;
+}
+
+function display_color_matrix(matrix) {
+
+  var latex = "\\begin{pmatrix}";
+  var mat = matrix;
+  for(var i = 0; i < mat.length; i++) {
+    for(var j = 0; j < mat[i].length; j++) {
+        color = "{";
+        if (mat[i][j] == 2) {
+            color = "{\\colorbox{green}";
+        }
+        if (mat[i][j] == 1) {
+            color = "{\\colorbox{red}";
+        }
+        latex = latex + color + mat[i][j] + "}";
+        if (j < mat[i].length - 1) {
+            latex = latex + "&";
+        }
     }
     if (i < mat.length - 1) {
       latex = latex + "\\\\";
@@ -128,6 +155,12 @@ function echo_matrix(matrix) {
           if (data.what == 'matrix')
           {
             var latex = "$$" + nm + "=" + display_matrix(data.value) + "$$"
+            $("#output").prepend(latex);
+            MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
+          }
+          if (data.what == 'color_matrix')
+          {
+            var latex = "$$" + nm + "=" + display_color_matrix(data.value) + "$$"
             $("#output").prepend(latex);
             MathJax.Hub.Queue(["Typeset",MathJax.Hub,output]);
           }
