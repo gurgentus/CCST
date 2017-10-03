@@ -1,7 +1,7 @@
 #ifndef ADAPTIVERUNGEKUTTASOLVER_H
 #define ADAPTIVERUNGEKUTTASOLVER_H
 
-#include "AbstractOdeSolver.hpp"
+#include "AbstractDeSolver.h"
 #include <QVector3D>
 
 class AdaptiveRungeKuttaSolver : public AbstractOdeSolver

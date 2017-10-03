@@ -8,6 +8,7 @@
  */
 
 #include "CollocationSolver.h"
+#include "AbstractDeSolver.h"
 
 #include <iostream>
 #include <fstream>
@@ -15,17 +16,8 @@
 #include "Eigen/SparseLU"
 
 CollocationSolver::CollocationSolver(DifferentialSystem *p_ode, int num_nodes, Eigen::VectorXd& init_guess)
-        : grid_(num_nodes, p_ode->t_min(), p_ode->t_max())
+        : AbstractDeSolver(p_ode, num_nodes, init_guess)
 {
-    // initialize the ode, grid, and the initial guess
-    p_ode_ = p_ode;
-    dim_ = p_ode->dim();
-    num_nodes_ = num_nodes;
-    sol_vec_ = init_guess;
-
-    // file for solution data
-    filename_ = "ode_output.txt";
-
     // default collocation parameters - three stage Lobatto scheme
     k = 3;
     rho << 0.0, 0.5, 1.0;
@@ -188,3 +180,19 @@ int CollocationSolver::Solve()
     }
     return 1;
 }
+
+void CollocationSolver::WriteSolutionFile()
+{
+    std::ofstream output_file(filename_.c_str());
+    assert(output_file.is_open());
+    for (int i=0; i<num_nodes_; i++)
+    {
+        double x = grid_.nodes_[i].coordinate;
+        output_file << x << " " << sol_vec_(2*i) << "\n";
+    }
+    output_file.flush();
+    output_file.close();
+    std::cout << "Solution written to " << filename_ << std::endl;
+
+}
+
