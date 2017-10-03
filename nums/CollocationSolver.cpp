@@ -59,37 +59,36 @@ double CollocationSolver::Step(int i)
 
 int CollocationSolver::Solve()
 {
+
+    // Setup matrices involved in the method
+    Eigen::MatrixXd A = Eigen::MatrixXd(dim_, dim_);
+    Eigen::MatrixXd W = Eigen::MatrixXd(k*dim_, k*dim_);
+    Eigen::MatrixXd V = Eigen::MatrixXd(k*dim_, dim_);
+    Eigen::VectorXd q = Eigen::VectorXd(k*dim_);
+    Eigen::VectorXd r = Eigen::VectorXd((num_nodes_+1)*dim_);
+    Eigen::MatrixXd I = Eigen::MatrixXd::Identity(dim_,dim_);
+    Eigen::MatrixXd I2 = Eigen::MatrixXd::Identity(k*dim_,k*dim_);
+    Eigen::MatrixXd D = Eigen::MatrixXd(dim_, dim_*k);
+    Eigen::MatrixXd U = Eigen::MatrixXd(k*num_nodes_*dim_, dim_);
+    Eigen::VectorXd p = Eigen::VectorXd(k*num_nodes_*dim_);
+
+    for (int i=0; i<k; i++)
+    {
+        D.block(0, i*dim_, dim_, dim_) = b(i)*I;
+    }
+    // This will be a large sparse matrix so use Eigen::SparseMatrix
+    Eigen::SparseMatrix<double, Eigen::ColMajor> Gamma((num_nodes_+1)*dim_, (num_nodes_+1)*dim_);
+
+
     for (int iter=0; iter<MAX_ITER; iter++)
     {
-        std::cout << "Iteration: " << iter << std::endl;
-
-        // Setup matrices involved in the method
         Eigen::VectorXd u = Eigen::VectorXd(sol_vec_.segment(0,dim_));
         Eigen::VectorXd v = Eigen::VectorXd(sol_vec_.tail(dim_));
-
         Eigen::MatrixXd B1 = p_ode_->BcsGrad1Func(u,v);
         Eigen::MatrixXd B2 = p_ode_->BcsGrad2Func(u,v);
         Eigen::VectorXd beta = -p_ode_->BcsFunc(u,v);
 
-        Eigen::MatrixXd A = Eigen::MatrixXd(dim_, dim_);
-        Eigen::MatrixXd W = Eigen::MatrixXd(k*dim_, k*dim_);
-        Eigen::MatrixXd V = Eigen::MatrixXd(k*dim_, dim_);
-        Eigen::VectorXd q = Eigen::VectorXd(k*dim_);
-        Eigen::VectorXd r = Eigen::VectorXd((num_nodes_+1)*dim_);
-        Eigen::MatrixXd I = Eigen::MatrixXd::Identity(dim_,dim_);
-        Eigen::MatrixXd I2 = Eigen::MatrixXd::Identity(k*dim_,k*dim_);
-        Eigen::MatrixXd D = Eigen::MatrixXd(dim_, dim_*k);
-
-        Eigen::MatrixXd U = Eigen::MatrixXd(k*num_nodes_*dim_, dim_);
-        Eigen::VectorXd p = Eigen::VectorXd(k*num_nodes_*dim_);
-
-        for (int i=0; i<k; i++)
-        {
-            D.block(0, i*dim_, dim_, dim_) = b(i)*I;
-        }
-
-        // This will be a large sparse matrix so use Eigen::SparseMatrix
-        Eigen::SparseMatrix<double, Eigen::ColMajor> Gamma((num_nodes_+1)*dim_, (num_nodes_+1)*dim_);
+        std::cout << "Iteration: " << iter << std::endl;
 
         for (int i=0; i<num_nodes_; i++)
         {
