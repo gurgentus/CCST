@@ -2,7 +2,6 @@
  * car dynamics model and trajectory planners
  */
 
-
 #include "Car.h"
 #include <iostream>
 #include <fstream>
@@ -13,6 +12,22 @@ Car::Car(double l, int N) : DifferentialSystem(0.0, 100.0, 5) {
     this->l = l;
     this->N = N;
     SetControlScheme(MinJerk);
+}
+
+Car::Car() : DifferentialSystem(0.0, 100.0, 5) {
+    SetControlScheme(MinJerk);
+    SetCarModel(SimpleCar);
+}
+
+void Car::SetParams(double l, double N)
+{
+    this->l = l;
+    this->N = N;
+}
+
+void Car::SetCarModel(CarModel model)
+{
+    this->car_model = model;
 }
 
 void Car::SetControlScheme(ControlScheme scheme)
@@ -35,11 +50,13 @@ Eigen::VectorXd Car::RhsFunc(double t, const Eigen::VectorXd& y_vec)
 
     UpdateControls(y_vec, MinTime);
 
-    rs <<   v*cos(xi),
-            v*sin(xi),
-            (T_*cos(dw_)*cos(dw_)-D)/m,
-            (v/l)*tan(dw_),
-            g;
+    if (car_model == SimpleCar) {
+        rs <<   v*cos(xi),
+                v*sin(xi),
+                (T_*cos(dw_)*cos(dw_)-D)/m,
+                (v/l)*tan(dw_),
+                g;
+    }
     return rs;
 }
 
@@ -370,12 +387,51 @@ int Car::Factorial(int n)
 //    return result;
 //}
 //
-boost::python::list Car::Generate2DTrajectory(boost::python::list& start_pos, boost::python::list& start_vel,
-                                              boost::python::list& start_acc, boost::python::list& end_pos,
-                                              boost::python::list& end_vel, boost::python::list& end_acc, double time_ahead)
+
+boost::python::list Car::GenerateOptimalStoppingTrajectory(boost::python::list& start_pos, boost::python::list& start_vel)
 {
     boost::python::list result;
 
+    double cur_posx = boost::python::extract<double>(start_pos[0]);
+    double cur_posy = boost::python::extract<double>(start_pos[1]);
+    double cur_velx = boost::python::extract<double>(start_vel[0]);
+    double cur_vely = boost::python::extract<double>(start_vel[1]);
+
+    double car_speed = sqrt(cur_velx*cur_velx + cur_vely*cur_vely);
+
+    Eigen::VectorXd init_state = Eigen::VectorXd::Zero(5);
+    init_state << cur_posx, cur_posy, car_speed, 0, 1;
+
+
+    // Instantiate a CollocationSolver with 1000 grid points for a system of
+    RungeKuttaSolver ode(this, N, init_state);
+    std::cout << "Solving..." << std::endl;
+
+    int status = ode.Solve();
+    if (status == 0) {
+        std::cout << "Solved." << std::endl;
+        sol_vec_ = ode.sol_vec();
+        std::cout << sol_vec_.tail(dim()) << std::endl;
+    }
+
+    std::cout << "Solved." << std::endl;
+
+    Eigen::VectorXd state = Eigen::VectorXd::Zero(2);
+    double t = 0;
+    for (int i=0; i<N; i++)
+    {
+        result.append(t);
+        result.append(MinTimeStoppageThrottleControl(sol_vec_.segment(i*dim(),dim())));
+        t = t + 0.01;
+    }
+
+    return result;
+}
+
+boost::python::list Car::Generate2DTrajectory(boost::python::list& start_pos, boost::python::list& start_vel,
+                                              boost::python::list& start_acc, boost::python::list& end_pos,
+                                              boost::python::list& end_vel, boost::python::list& end_acc, double time_ahead, bool fuzzy, int num)
+{
     double cur_posx = boost::python::extract<double>(start_pos[0]);
     double cur_posy = boost::python::extract<double>(start_pos[1]);
     double cur_velx = boost::python::extract<double>(start_vel[0]);
@@ -391,47 +447,112 @@ boost::python::list Car::Generate2DTrajectory(boost::python::list& start_pos, bo
     double ref_accx = boost::python::extract<double>(end_acc[0]);
     double ref_accy = boost::python::extract<double>(end_acc[1]);
 
-    Eigen::VectorXd init_state = Eigen::VectorXd::Zero(5);
-    init_state << cur_posx, cur_posy, car_speed, 0, 1;
+    boost::python::list results;
 
+    std::normal_distribution<double> ref_posx_distr(ref_posx,0.3);
+    std::normal_distribution<double> ref_velx_distr(ref_velx,0.3);
+    std::normal_distribution<double> ref_posy_distr(ref_posy,0.3);
+    std::normal_distribution<double> ref_vely_distr(ref_vely,0.3);
 
+    double h = time_ahead/N;
+    int num_feasible_traj = 0;
+    double best_cost = 10000;
 
-    std::vector<Eigen::MatrixXd> waypoints(2);
-    waypoints[0] = Eigen::MatrixXd(3,2);
-    waypoints[0] << cur_posx, ref_posx,
-            cur_velx, ref_velx,
-            cur_accx, ref_accx;
-    waypoints[1] = Eigen::MatrixXd(3,2);
-    waypoints[1] << cur_posy, ref_posy,
-            cur_vely, ref_vely,
-            cur_accy, ref_accy;
-    std::cout << waypoints[0] << std::endl << waypoints[1] << std::endl;
-    Eigen::VectorXd time_at_waypoint = Eigen::VectorXd(2);
-    time_at_waypoint << 0, time_ahead;
+    for (int i=0; i<num; i++) {
+        boost::python::list x_result;
+        boost::python::list y_result;
+        std::vector<double> x_vec;
+        std::vector<double> y_vec;
 
-    Eigen::MatrixXd spline_coeffs;
+        if (fuzzy) {
+            ref_posx = ref_posx_distr(generator);
+            ref_vely = ref_velx_distr(generator);
+            ref_posy = ref_posy_distr(generator);
+            ref_vely = ref_vely_distr(generator);
+        }
 
-    int status = GenerateMinDerivTraj(6, waypoints, time_at_waypoint, spline_coeffs);
-    if (status == 2) {
-        std::cout << "error" << std::endl;
+        Eigen::VectorXd init_state = Eigen::VectorXd::Zero(5);
+        init_state << cur_posx, cur_posy, car_speed, 0, 1;
+
+        std::vector<Eigen::MatrixXd> waypoints(2);
+        waypoints[0] = Eigen::MatrixXd(3,2);
+        waypoints[0] << cur_posx, ref_posx,
+                cur_velx, ref_velx,
+                cur_accx, ref_accx;
+        waypoints[1] = Eigen::MatrixXd(3,2);
+        waypoints[1] << cur_posy, ref_posy,
+                cur_vely, ref_vely,
+                cur_accy, ref_accy;
+        std::cout << waypoints[0] << std::endl << waypoints[1] << std::endl;
+        Eigen::VectorXd time_at_waypoint = Eigen::VectorXd(2);
+        time_at_waypoint << 0, time_ahead;
+
+        Eigen::MatrixXd spline_coeffs;
+
+        int status = GenerateMinDerivTraj(6, waypoints, time_at_waypoint, spline_coeffs);
+        if (status == 2) {
+            std::cout << "error" << std::endl;
+        }
+        Eigen::VectorXd state = Eigen::VectorXd::Zero(2);
+        double t = 0;
+        bool feasible_trajectory = true;
+        double total_cost = 0;
+
+        for (int i=0; i<N; i++)
+        {
+            DesiredState(6, t, spline_coeffs, time_at_waypoint, state);
+            x_result.append(state(0));
+            y_result.append(state(1));
+            x_vec.push_back(state(0));
+            y_vec.push_back(state(1));
+            t = t + h;
+            double x_cost = RunningCost(x_vec, h, true, true);
+            if (x_cost > 10.0) {
+                feasible_trajectory = false;
+                break;
+            }
+            double y_cost = RunningCost(y_vec, h, true, true);
+            if (y_cost > 5.0) {
+                feasible_trajectory = false;
+                break;
+            }
+            total_cost = total_cost + x_cost + y_cost;
+        }
+        if (feasible_trajectory) {
+            num_feasible_traj++;
+            if (total_cost < best_cost) {
+                results.insert(0,x_result);
+                results.insert(1,y_result);
+                best_cost = total_cost;
+            }
+            else {
+                results.append(x_result);
+                results.append(y_result);
+            }
+        }
+
     }
-    Eigen::VectorXd state = Eigen::VectorXd::Zero(2);
-    double t = 0;
-    for (int i=0; i<N; i++)
-    {
-        DesiredState(6, t, spline_coeffs, time_at_waypoint, state);
-
-        result.append(state(0));
-        result.append(state(1));
-        t = t + time_ahead/N;
-    }
-
-    return result;
+    return results;
 }
-//char const* OrbitTransfer::greet()
-//{
-//    return "hello, world";
-//}
+
+double Car::RunningCost(std::vector<double>& state, double h, bool dir_check, bool jerk_check)
+{
+    double cost = 0;
+    int n = state.size();
+    if (dir_check) {
+        if (n > 2) {
+            if (state[n-1] < state[n-2]) {
+                cost = cost + 100.0;
+            }
+        }
+    }
+    if (jerk_check) {
+        if (n > 3) {
+            cost = cost + (state[n-1]-3*state[n-2]+3*state[n-3]-state[n-4])/(h*h*h);
+        }
+    }
+    return cost;
+}
 
 #include <boost/python.hpp>
 //#include <boost/python/numpy.hpp>
@@ -442,6 +563,8 @@ BOOST_PYTHON_MODULE(Car)
 {
     class_<Car>("Car")
 //            .def("greet", &Car::greet)
+            .def("GenerateOptimalStoppingTrajectory", &Car::GenerateOptimalStoppingTrajectory)
             .def("Generate2DTrajectory", &Car::Generate2DTrajectory)
+            .def("SetParams", &Car::SetParams)
             ;
 }

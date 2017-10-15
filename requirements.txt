@@ -11,3 +11,4 @@ Flask-JSGlue
 jsonrpc
 json-rpc
 pymongo
+pillow

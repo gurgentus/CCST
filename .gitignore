@@ -6,4 +6,5 @@ scene_segmentation/data_road/*
 scene_segmentation/runs/*
 output/*
 nums/CMakeLists.txt
-nums/cmake-build-debug/*
+nums/cmake-build-debug
+nums/build

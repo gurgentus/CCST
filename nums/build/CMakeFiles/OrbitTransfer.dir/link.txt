@@ -1,1 +1,0 @@
-/usr/bin/c++  -fPIC  -std=c++11   -shared -Wl,-soname,libOrbitTransfer.so -o libOrbitTransfer.so CMakeFiles/OrbitTransfer.dir/DifferentialSystem.cpp.o CMakeFiles/OrbitTransfer.dir/FiniteDifferenceGrid.cpp.o CMakeFiles/OrbitTransfer.dir/OrbitTransfer.cpp.o CMakeFiles/OrbitTransfer.dir/CollocationSolver.cpp.o -lboost_python-py34 -lpython3.3m -lboost_python-py34 -lpython3.3m 
