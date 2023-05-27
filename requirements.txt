@@ -10,6 +10,6 @@ oct2py
 Flask-JSGlue
 jsonrpc
 json-rpc
-pymongo
+pymongo[srv]
 pillow
 markupsafe
