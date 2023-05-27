@@ -33,12 +33,13 @@ def modes(mat, V,E):
 
     e_vals, e_vecs = np.linalg.eig(states[mat]['value'])
     str_vec = helper.to_str_repr(e_vecs)
+    str_vals = helper.to_str_repr(e_vals)
     states[V] = {'value': np.matrix(e_vecs), 'meta': {'what': 'matrix', 'value': str_vec}}
-    states[E] = {'value': e_vals, 'meta': {'what': 'vector', 'value': e_vals}}
+    states[E] = {'value': e_vals, 'meta': {'what': 'vector', 'value': str_vals}}
 
     helper.save_states(states)
 
-    return states[E]['value'].tolist()
+    return states[E]['meta']['value']
 
 # define state-space system using matrices A,B,C,D and store it under variable name
 @api.dispatcher.add_method
@@ -161,21 +162,21 @@ def simulate(output, G, init, inp, time, plot):
     r = ode(f, jac).set_integrator('vode', method='bdf', with_jacobian=True)
     r.set_initial_value(init, 0).set_f_params(0.0).set_jac_params(0.0)#.set_solout(solout)
 
-    solout(0, np.asscalar(init[states[G]['outputs'][output]].real))
+    solout(0, np.ndarray.item(init[states[G]['outputs'][output]].real))
 
     while r.successful() and r.t < t1:
         r.integrate(r.t+dt)
         out = states[G]['C']['value']*r.y.reshape(r.y.size,1) + states[G]['D']['value']*inp
-        solout(r.t, np.asscalar(out[states[G]['outputs'][output]].real))
-        print([r.t, np.asscalar(out[states[G]['outputs'][output]].real)], file=sys.stderr)
+        solout(r.t, np.ndarray.item(out[states[G]['outputs'][output]].real))
+        print([r.t, np.ndarray.item(out[states[G]['outputs'][output]].real)], file=sys.stderr)
 
     # create a new plot with a title and axis labels
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
     p = plt.figure(title="Reponse", tools=TOOLS,
-                   x_axis_label='time', y_axis_label=output, plot_width=800, plot_height=300)
+                   x_axis_label='time', y_axis_label=output, width=800, height=300)
 
     # add a line renderer with legend and line thickness
-    p.line(ts, ys, legend=output, line_width=2)
+    p.line(ts, ys, legend_label=output, line_width=2)
 
     script, div = components(p)
     states[plot] = {'meta': {}}

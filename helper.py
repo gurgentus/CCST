@@ -63,13 +63,13 @@ def create_multi_plot(x, y, plot, plot_title, x_label, y_label, legend, height=6
     # create a new plot with a title and axis labels
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
     p = plt.figure(title=plot_title, tools=TOOLS,
-                   x_axis_label=x_label, y_axis_label=y_label, plot_width=600, plot_height=height)
+                   x_axis_label=x_label, y_axis_label=y_label, width=600, height=height)
 
     # create a color iterator
     #colors = itertools.cycle(palette)
     num_colors = len(x)
     # add a line renderer with legend and line thickness
-    p.multi_line(x, y, legend=legend, color=bokeh.palettes.viridis(num_colors), line_width=2)
+    p.multi_line(x, y, legend_label=legend, color=bokeh.palettes.viridis(num_colors), line_width=2)
 
     script, div = components(p)
     states = load_states()
@@ -81,13 +81,13 @@ def create_plot(x, y, plot, plot_title, x_label, y_label, legend, height=600):
     # create a new plot with a title and axis labels
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select,lasso_select"
     p = plt.figure(title=plot_title, tools=TOOLS,
-                   x_axis_label=x_label, y_axis_label=y_label, plot_width=600, plot_height=height)
+                   x_axis_label=x_label, y_axis_label=y_label, width=600, height=height)
 
 
     #ts = [2,3]
     #ys = [5,6]
     # add a line renderer with legend and line thickness
-    p.line(x, y, legend=legend, line_width=2)
+    p.line(x, y, legend_label=legend, line_width=2)
 
     script, div = components(p)
     states = load_states()
