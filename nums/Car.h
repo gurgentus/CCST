@@ -11,6 +11,8 @@
 #include <random>
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
+#include <boost/numpy.hpp>
+#include <random>
 
 class Car : public DifferentialSystem {
 private:
