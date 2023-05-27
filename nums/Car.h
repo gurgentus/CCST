@@ -9,6 +9,7 @@
 #include "DifferentialSystem.h"
 #include <vector>
 #include <boost/numpy.hpp>
+#include <random>
 
 class Car : public DifferentialSystem {
 private:
