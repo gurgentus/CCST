@@ -31,7 +31,7 @@ protected:
 //    std::vector<double> mInitialValueVector;
 public:
     AbstractDeSolver(DifferentialSystem *p_ode, int num_nodes, Eigen::VectorXd& init_guess);
-
+    virtual ~AbstractDeSolver() {};
     /* sets the filename if results should be written to a file */
     void set_filename(const std::string& name)
     {

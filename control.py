@@ -38,7 +38,7 @@ def modes(mat, V,E):
 
     helper.save_states(states)
 
-    return str(states[E]['value'].tolist())
+    return states[E]['value'].tolist()
 
 # define state-space system using matrices A,B,C,D and store it under variable name
 @api.dispatcher.add_method

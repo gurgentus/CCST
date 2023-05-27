@@ -1,5 +1,6 @@
 from flask import Blueprint
-from pymongo import MongoClient # Database connector
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 import pickle
 import numpy as np
 import bokeh.plotting as plt
@@ -12,13 +13,16 @@ import itertools
 
 helper = Blueprint('helper', __name__)
 
-uri = 'mongodb://heroku_c9chv2pq:euoqe7c7o24l17ar4pavqleame@ds121014.mlab.com:21014/heroku_c9chv2pq'
+uri = 'mongodb+srv://gurgentus:e5O2rrDipb9nm5Wj@ccst.cf030e2.mongodb.net/?retryWrites=true&w=majority'
+#uri = 'mongodb://heroku_c9chv2pq:euoqe7c7o24l17ar4pavqleame@.mlab.com:21014/heroku_c9chv2pq'
 
 #client = MongoClient('localhost', 27017)    #Configure the connection to the database
-client = MongoClient(uri)
+# client = MongoClient(uri)
+# Create a new client and connect to the server
+client = MongoClient(uri, server_api=ServerApi('1'))
 
-#db = client.data    #Select the database
-db = client.get_default_database()
+db = client.data    #Select the database
+#db = client.get_default_database()
 
 dat = db.dictdata   #Select the collection
 

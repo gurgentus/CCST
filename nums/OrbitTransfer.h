@@ -10,7 +10,7 @@
 
 #include "Eigen/Dense"
 #include "DifferentialSystem.h"
-#include <boost/numpy.hpp>
+#include <boost/python/numpy.hpp>
 
 class OrbitTransfer : public DifferentialSystem {
 private:

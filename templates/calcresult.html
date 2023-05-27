@@ -109,11 +109,11 @@ function echo_matrix(matrix) {
           this.echo(arg1);
       },
       js: function() {
-      this.push(function(command, term) {
-        var result = window.eval(command);
-        if (result != undefined) {
-          this.echo(String(result));
-        }
+        this.push(function(command, term) {
+          var result = window.eval(command);
+          if (result != undefined) {
+            this.echo(String(result));
+          }
       }, {
         name: 'js',
         prompt: 'js> '});
@@ -140,13 +140,14 @@ function echo_matrix(matrix) {
       },
 
       test: function() {
-      this.push([$SCRIPT_ROOT, {
-        echo: function(arg1) {
-            this.echo(arg1);
-        },
-      }], {
-        name: 'test',
-        prompt: 'test> '});
+        this.push([$SCRIPT_ROOT, {
+          echo: function(arg1) {
+              this.echo(arg1);
+          },
+        }], {
+          name: 'test',
+          prompt: 'test> '
+        });
       },
       gdisplay: function(nm) {
         $.getJSON($SCRIPT_ROOT + '/gdisplay', {
@@ -228,7 +229,9 @@ function echo_matrix(matrix) {
       }
     }], {
       //greetings: "Menu: (R)egister (L)ogin"});
-      greetings: "Cloud Controls and Simulation Toolbox"});
+      greetings: "Cloud Controls and Simulation Toolbox",
+      height: 600,
+    });
   });
   </script>
 

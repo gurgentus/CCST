@@ -555,7 +555,7 @@ double Car::RunningCost(std::vector<double>& state, double h, bool dir_check, bo
 }
 
 #include <boost/python.hpp>
-//#include <boost/python/numpy.hpp>
+#include <boost/python/numpy.hpp>
 
 using namespace boost::python;
 

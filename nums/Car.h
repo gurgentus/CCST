@@ -8,7 +8,9 @@
 #include "Eigen/Dense"
 #include "DifferentialSystem.h"
 #include <vector>
-#include <boost/numpy.hpp>
+#include <random>
+#include <boost/python.hpp>
+#include <boost/python/numpy.hpp>
 
 class Car : public DifferentialSystem {
 private:

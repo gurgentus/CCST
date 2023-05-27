@@ -293,7 +293,7 @@ char const* OrbitTransfer::greet()
 }
 
 #include <boost/python.hpp>
-//#include <boost/python/numpy.hpp>
+#include <boost/python/numpy.hpp>
 
 using namespace boost::python;
 

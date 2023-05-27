@@ -1,5 +1,8 @@
 *.pyc
 venv
+.venv
+ccst/lib
+ccst/bin
 *~
 .DS_Store
 scene_segmentation/data_road/*
@@ -8,3 +11,6 @@ output/*
 nums/CMakeLists.txt
 nums/cmake-build-debug
 nums/build
+
+*.o
+*.so

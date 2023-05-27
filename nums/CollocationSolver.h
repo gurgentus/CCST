@@ -23,7 +23,8 @@ private:
 
 public:
     CollocationSolver(DifferentialSystem *p_ode, int num_nodes, Eigen::VectorXd& init_guess);
-
+    virtual ~CollocationSolver() {};
+    
     /* sets the collocation scheme */
     void SetScheme(int k, Eigen::VectorXd& rho, Eigen::MatrixXd& a, Eigen::VectorXd& b);
 

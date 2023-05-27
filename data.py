@@ -10,7 +10,7 @@ data_api = Blueprint('data_api', __name__)
 # @simple_page.route('/<page>')
 # def show(page):
 
-states = helper.load_states()
+# states = helper.load_states()
 
 @api.dispatcher.add_method
 def data(file, name):

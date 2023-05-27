@@ -13,8 +13,8 @@ from bson.binary import Binary
 # from oct2py import octave as oc
 from data import data_api
 from control import control_api
-from pathplanning import pathplanning_api
-from flask_jsglue import JSGlue
+#from pathplanning import pathplanning_api
+#from flask_jsglue import JSGlue
 
 # loads data from database and contains helper methods
 import helper
@@ -26,19 +26,22 @@ app.config.update(
     DEBUG = True,
 )
 
-jsglue = JSGlue(app)
+#jsglue = JSGlue(app)
 
 #app.add_url_rule('/', 'api', api.as_view())
 app.register_blueprint(api.as_blueprint())
 app.register_blueprint(control_api)
 app.register_blueprint(data_api)
-app.register_blueprint(pathplanning_api)
+#app.register_blueprint(pathplanning_api)
 
 #UPLOAD_FOLDER = os.path.basename('uploads')
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(APP_ROOT, 'uploads')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+states = {}
+helper.save_states(states)
 
 @app.route("/")
 def index():
@@ -75,7 +78,7 @@ def start():
         '_id':1 ,'states':states
         })
 
-states = helper.load_states()
+#states = helper.load_states()
 
 @api.dispatcher.add_method
 def display(name):
@@ -86,9 +89,9 @@ def display(name):
     elif states[name]['meta']['what'] == 'image':
         return "To show the image type: " + states[name]['meta']['value']
     elif states[name]['meta']['what'] == 'matrix':
-        return str(states[name]['value'].tolist())
+        return states[name]['value'].tolist()
     else:
-        return str(states[name]['value'].tolist())
+        return states[name]['value'].tolist()
 
 # retrieves the variable passed as the argument to render using latex (see calcresult.html)
 @app.route('/gdisplay')

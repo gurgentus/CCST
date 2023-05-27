@@ -6,7 +6,6 @@
 #define NUMS_BVPSOLVER_H
 
 #include "Eigen/Dense"
-#include "BVPSolver.h"
 #include "DifferentialSystem.h"
 #include "FiniteDifferenceGrid.h"
 #include "Node.h"

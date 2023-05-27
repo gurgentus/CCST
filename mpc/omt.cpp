@@ -2,7 +2,7 @@
 #include "Eigen/StdVector"
 #include <vector>
 #include <iostream>
-#include <boost/numpy.hpp>
+#include <boost/python/numpy.hpp>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
