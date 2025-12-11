@@ -194,3 +194,5 @@ except ImportError:
 # Note: Use FastAPI CLI to run the application:
 #   Development: uv run fastapi dev main.py
 #   Production:  uv run fastapi run main.py --host 0.0.0.0 --port $PORT
+#
+# Railway/Heroku will use the Procfile which already includes 'uv run'
