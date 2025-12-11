@@ -14,3 +14,13 @@ nums/build
 
 *.o
 *.so
+
+# Environment variables and secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Legacy Flask/Jinja2 files (migrated to Next.js)
+templates/
+static/

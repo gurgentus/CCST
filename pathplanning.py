@@ -4,7 +4,8 @@ from flask import Blueprint
 from jsonrpc.backend.flask import api
 import helper
 from flask import current_app as app
-import scipy.misc
+from PIL import Image
+import imageio.v2 as imageio
 
 # orbital mechanics toolbox
 import mpc.omt as omt
@@ -18,9 +19,13 @@ def generate_grid(name, height, width):
     image_shape = (height, width)
     states = helper.load_states()
     f = os.path.join(app.config['UPLOAD_FOLDER'], states[name]['value'])
-    image = scipy.misc.imresize(scipy.misc.imread(name=f, flatten=True), image_shape)
+    # Load grayscale image and resize using PIL
+    img = imageio.imread(f, mode='L')  # 'L' mode for grayscale
+    img_pil = Image.fromarray(img)
+    img_resized = img_pil.resize((width, height), Image.Resampling.LANCZOS)
+    image = np.array(img_resized)
     str_vec = helper.to_str_repr(np.array(image))
-    states[name+'_grid'] = {'value': np.matrix(image), 'meta': {'what': 'matrix', 'value': str_vec}}
+    states[name+'_grid'] = {'value': np.array(image), 'meta': {'what': 'matrix', 'value': str_vec}}
     helper.save_states(states)
     #matrix(name+'_grid', np.array(image))
     return 'Grid matrix generated.  Type gdisplay ' + name + '_grid to display.'
@@ -35,7 +40,7 @@ def generate_grid_obstacles(name, threshold_value, new_name):
     array_np[less_then] = 0
     # print(array_np, file=sys.stderr)
     str_vec = helper.to_str_repr(array_np)
-    states[new_name] = {'value': np.matrix(array_np), 'meta': {'what': 'matrix', 'value': str_vec}}
+    states[new_name] = {'value': np.array(array_np), 'meta': {'what': 'matrix', 'value': str_vec}}
     helper.save_states(states)
     return 'New grid matrix generated.  Type gdisplay ' + new_name + ' to display.'
 

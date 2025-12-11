@@ -1,0 +1,21 @@
+[project]
+name = "ccst"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.9"
+dependencies = [
+    "bokeh>=3.4.3",
+    "fastapi[standard]>=0.124.2",
+    "flask>=3.1.2",
+    "grpcio>=1.76.0",
+    "grpcio-tools>=1.76.0",
+    "imageio>=2.37.2",
+    "json-rpc>=1.15.0",
+    "julia>=0.6.2",
+    "pillow>=11.3.0",
+    "pymongo>=4.15.5",
+    "python-dotenv>=1.2.1",
+    "python-multipart>=0.0.20",
+    "requests>=2.32.5",
+    "scipy>=1.13.1",
+]

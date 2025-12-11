@@ -5,6 +5,9 @@ import warnings
 import shutil
 from distutils.version import LooseVersion
 import project_tests as tests
+import numpy as np
+from PIL import Image
+import imageio.v2 as imageio
 
 
 # Check TensorFlow Version
@@ -180,7 +183,9 @@ def inference(filename):
     # image_outputs = gen_test_output(
     #     sess, logits, keep_prob, input_image, os.path.join(data_dir, 'data_road/testing'), image_shape)
 
-    image = scipy.misc.imresize(scipy.misc.imread(filename), image_shape)
+    # Load and resize image using PIL and imageio
+    img = imageio.imread(filename)
+    image = np.array(Image.fromarray(img).resize((image_shape[1], image_shape[0]), Image.Resampling.LANCZOS))
 
     im_softmax = sess.run(
         [tf.nn.softmax(logits)],
@@ -188,14 +193,14 @@ def inference(filename):
     im_softmax = im_softmax[0][:, 1].reshape(image_shape[0], image_shape[1])
     segmentation = (im_softmax > 0.5).reshape(image_shape[0], image_shape[1], 1)
     mask = np.dot(segmentation, np.array([[0, 255, 0, 127]]))
-    mask = scipy.misc.toimage(mask, mode="RGBA")
-    street_im = scipy.misc.toimage(image)
+    mask = Image.fromarray(mask.astype('uint8'), mode="RGBA")
+    street_im = Image.fromarray(image.astype('uint8'))
     street_im.paste(mask, box=None, mask=mask)
 
     image_outputs = os.path.basename(image_file), np.array(street_im)
 
     for name, image in image_outputs:
-        scipy.misc.imsave(os.path.join(output_dir, name), image)
+        imageio.imwrite(os.path.join(output_dir, name), image)
 
 
 if __name__ == '__main__':

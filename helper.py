@@ -8,45 +8,90 @@ from bokeh.resources import CDN
 from bokeh.embed import components
 import bokeh.palettes
 import itertools
+import os
+from dotenv import load_dotenv
 
 # This file contains helper methods
 
 helper = Blueprint('helper', __name__)
 
-uri = 'mongodb+srv://gurgentus:e5O2rrDipb9nm5Wj@ccst.cf030e2.mongodb.net/?retryWrites=true&w=majority'
-#uri = 'mongodb://heroku_c9chv2pq:euoqe7c7o24l17ar4pavqleame@.mlab.com:21014/heroku_c9chv2pq'
+# Load environment variables from .env file
+load_dotenv()
 
-#client = MongoClient('localhost', 27017)    #Configure the connection to the database
-# client = MongoClient(uri)
-# Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'))
+# MongoDB connection - check once at startup
+_use_mongodb = False
+_client = None
+_db = None
+_dat = None
 
-db = client.data    #Select the database
-#db = client.get_default_database()
+def _init_mongodb():
+    """Initialize MongoDB connection once at startup"""
+    global _use_mongodb, _client, _db, _dat
 
-dat = db.dictdata   #Select the collection
+    mongodb_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+    try:
+        # Try to connect with a short timeout
+        _client = MongoClient(mongodb_uri, server_api=ServerApi('1'),
+                            serverSelectionTimeoutMS=1000,
+                            connectTimeoutMS=1000)
+        # Test connection
+        _client.admin.command('ping')
+        _db = _client.data
+        _dat = _db.dictdata
+        _use_mongodb = True
+        print("✅ Connected to MongoDB")
+    except Exception as e:
+        print(f"⚠️  MongoDB not available: {e}")
+        print("📝 Using in-memory state storage")
+        _use_mongodb = False
+        _client = None
+        _db = None
+        _dat = None
+
+# Initialize MongoDB connection once at module import
+_init_mongodb()
+
+# Fallback in-memory storage when MongoDB is not available
+_memory_storage = {'states': {}}
 
 # loads and saves states and variables from the database into the 'states' dictionary
 # TODO: add code to handle multiple requests
 def load_states():
-    if dat.find({ "_id": { "$exists": True, "$ne": "" } }):
-        idinfo = dat.find_one({"_id":1})
-    else:
-        dat.update_one({"_id":1}, {"$set": {"id":1}}, upsert=True)
-        idinfo = dat.find_one({"_id":1})
+    """Load states from MongoDB or memory fallback"""
+    # Use the startup flag to decide - no repeated connection attempts!
+    if not _use_mongodb:
+        return _memory_storage.get('states', {})
 
-    if idinfo and 'states' in idinfo:
-        #print("db", file=sys.stderr)
-        states = pickle.loads(idinfo['states'])
-    else:
-        dat.update_one({'_id':1},{'$set':{'states': {} }}, upsert=True)
+    try:
+        if _dat.find({ "_id": { "$exists": True, "$ne": "" } }):
+            idinfo = _dat.find_one({"_id":1})
+        else:
+            _dat.update_one({"_id":1}, {"$set": {"id":1}}, upsert=True)
+            idinfo = _dat.find_one({"_id":1})
 
-    idinfo = dat.find_one({"_id":1})
-    states = pickle.loads(idinfo['states'])
-    return states
+        if idinfo and 'states' in idinfo:
+            states = pickle.loads(idinfo['states'])
+        else:
+            _dat.update_one({'_id':1},{'$set':{'states': {} }}, upsert=True)
+            idinfo = _dat.find_one({"_id":1})
+            states = pickle.loads(idinfo['states'])
+        return states
+    except Exception as e:
+        print(f"Warning: Could not load from MongoDB: {e}. Using in-memory storage.")
+        return _memory_storage.get('states', {})
 
 def save_states(states):
-    dat.update_one({'_id':1},{'$set':{'states': pickle.dumps(states)}})
+    """Save states to MongoDB or memory fallback"""
+    # Use the startup flag to decide - no repeated connection attempts!
+    if not _use_mongodb:
+        _memory_storage['states'] = states
+        return
+
+    try:
+        _dat.update_one({'_id':1},{'$set':{'states': pickle.dumps(states)}})
+    except Exception as e:
+        print(f"Warning: Could not save to MongoDB: {e}. Using in-memory storage.")
+        _memory_storage['states'] = states
 
 # represent the matrix as a string
 def to_str_repr(arg):
